@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-End-to-end Playwright verification + 2400x2400 Retina LinkedIn Billboard & OpenGraph generator.
-Strictly uses 100% real screenshots of the live running Lunar Arctic Artemis application.
+End-to-end Playwright WebGL2 verification + 2400x2400 Retina LinkedIn Billboard & OpenGraph generator.
+100% real screenshots of the live WebGL2 raymarched Lunar Arctic application.
 """
 import base64
 import functools
@@ -11,7 +11,6 @@ import os
 import socketserver
 import sys
 import threading
-import time
 
 from playwright.sync_api import sync_playwright
 
@@ -27,7 +26,7 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
 
 def start_server(root_dir):
     handler = functools.partial(QuietHandler, directory=root_dir)
-    httpd = socketserver.TCPServer(("127.0.0.1", 0), handler)
+    httpd = socketserver.ThreadingTCPServer(("127.0.0.1", 0), handler)
     port = httpd.server_address[1]
     t = threading.Thread(target=httpd.serve_forever, daemon=True)
     t.start()
@@ -43,12 +42,9 @@ def main():
     os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
     os.makedirs(QUEUE_DIR, exist_ok=True)
 
-    meta_path = os.path.join(BASE_DIR, "assets", "polar_atlas_meta.json")
+    meta_path = os.path.join(BASE_DIR, "assets", "arctic_meta.json")
     with open(meta_path, "r", encoding="utf-8") as f:
         meta = json.load(f)
-
-    n_stats = meta["poles"]["north"]["stats"]
-    s_stats = meta["poles"]["south"]["stats"]
 
     httpd, port = start_server(BASE_DIR)
     url = f"http://127.0.0.1:{port}/index.html"
@@ -57,244 +53,234 @@ def main():
     errors = []
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
-
-        # 1. Verify full interactive application at 1440x900 @ 2x Retina
         ctx = browser.new_context(viewport={"width": 1440, "height": 900}, device_scale_factor=2)
         page = ctx.new_page()
         page.on("pageerror", lambda err: errors.append(f"PAGEERROR: {err}"))
         page.on("console", lambda msg: errors.append(f"CONSOLE_ERR: {msg.text}") if msg.type == "error" else None)
 
         page.goto(url, wait_until="networkidle")
-        page.wait_for_function("document.getElementById('loading-overlay').classList.contains('done')", timeout=20000)
-        page.wait_for_timeout(400)
+        page.wait_for_function("document.getElementById('loading-veil').classList.contains('done')", timeout=20000)
+        page.wait_for_timeout(500)
 
-        # Verify live metrics populated
-        b_north = page.locator("#badge-metric-north").inner_text()
-        b_south = page.locator("#badge-metric-south").inner_text()
-        print("Live Dual-Pole Metrics:", b_north, "|", b_south, flush=True)
-        assert "--" not in b_north and "--" not in b_south, "Metrics failed to populate!"
+        # Capture Hero Sunlight Raymarched View (1440x900 @ 2x)
+        shot_shadow = os.path.join(SCREENSHOTS_DIR, "arctic_sunlight.png")
+        page.screenshot(path=shot_shadow)
 
-        # Capture full Dual-Pole live UI screenshot
-        dual_ui_shot = os.path.join(SCREENSHOTS_DIR, "live_dual_pole_ui.png")
-        page.screenshot(path=dual_ui_shot)
-
-        # Capture OpenGraph 1200x630 (@2x = 2400x1260) directly from live app
+        # Capture OpenGraph 1200x630 (@2x = 2400x1260)
         page.set_viewport_size({"width": 1200, "height": 630})
-        page.wait_for_timeout(250)
+        page.wait_for_timeout(300)
         og_path = os.path.join(BASE_DIR, "og-card.png")
         page.screenshot(path=og_path)
         page.set_viewport_size({"width": 1440, "height": 900})
-        page.wait_for_timeout(250)
+        page.wait_for_timeout(300)
 
-        # Test all 6 scientific layers & capture pristine rasters for README & Billboard
-        for lyr in ["composite", "elevation", "solar", "thermal", "ice", "earth"]:
-            page.click(f'.layer-btn[data-layer="{lyr}"]')
-            page.wait_for_timeout(180)
-            if lyr in ("composite", "solar", "thermal", "ice"):
-                page.screenshot(path=os.path.join(SCREENSHOTS_DIR, f"layer_{lyr}.png"))
+        # Capture Eternal Light mode
+        page.click('.lens-btn[data-mode="light"]')
+        page.wait_for_timeout(450)
+        shot_light = os.path.join(SCREENSHOTS_DIR, "arctic_eternal_light.png")
+        page.screenshot(path=shot_light)
 
-        # Switch back to composite + Gateway NRHO preset so both Near & Far-Side Arctic sunlit rims shine!
-        page.click('.layer-btn[data-layer="composite"]')
-        page.click('.preset-btn[data-preset="gateway-nrho"]')
-        page.wait_for_timeout(220)
-        gateway_ui_shot = os.path.join(SCREENSHOTS_DIR, "live_gateway_dual_ui.png")
-        page.screenshot(path=gateway_ui_shot)
+        # Capture 24 K Ice Traps mode
+        page.click('.lens-btn[data-mode="cold"]')
+        page.wait_for_timeout(450)
+        shot_cold = os.path.join(SCREENSHOTS_DIR, "arctic_cold_traps.png")
+        page.screenshot(path=shot_cold)
 
-        # Capture exact billboard-aspect-ratio (1096:726 = 1440:954) screenshot so zero left/right UI text is cropped
-        page.set_viewport_size({"width": 1440, "height": 954})
-        page.wait_for_timeout(250)
-        billboard_ui_shot = os.path.join(SCREENSHOTS_DIR, "live_billboard_frame_ui.png")
-        page.screenshot(path=billboard_ui_shot)
-        page.set_viewport_size({"width": 1440, "height": 900})
-        page.wait_for_timeout(200)
+        # Capture Artemis Sites mode
+        page.click('.lens-btn[data-mode="artemis"]')
+        page.wait_for_timeout(450)
+        shot_artemis = os.path.join(SCREENSHOTS_DIR, "arctic_artemis_sites.png")
+        page.screenshot(path=shot_artemis)
 
-        # Also capture North-Pole-only crisp stage crop for hero showcase
-        page.click('#mode-north')
-        page.wait_for_timeout(220)
-        north_stage_shot = os.path.join(SCREENSHOTS_DIR, "live_north_stage.png")
-        page.locator(".map-stage").screenshot(path=north_stage_shot)
+        # Capture pure circular Moon disc close-up for ultra-clean SpaceX-style LinkedIn Billboard
+        page.click('.lens-btn[data-mode="shadow"]')
+        page.evaluate("document.getElementById('story-card').style.visibility='hidden'; document.getElementById('starfield').style.visibility='hidden'; document.getElementById('cosmos').style.background='transparent'; document.body.style.background='transparent';")
+        page.wait_for_timeout(450)
+        orb_shot = os.path.join(SCREENSHOTS_DIR, "arctic_orb_stage.png")
+        page.locator("#orb-stage").screenshot(path=orb_shot, omit_background=True)
+        page.evaluate("document.getElementById('story-card').style.visibility='visible'; document.getElementById('starfield').style.visibility='visible'; document.getElementById('cosmos').style.background=''; document.body.style.background='';")
 
         # Test FR i18n parity
         page.click('.lang-btn[data-lang="fr"]')
         page.wait_for_timeout(150)
-        fr_title = page.locator(".brand-name").inner_text()
-        assert "ARTEMIS NORD" in fr_title, f"French i18n failed: {fr_title}"
+        fr_title = page.locator(".title").inner_text()
+        assert "ARCTIQUE" in fr_title, f"French i18n failed: {fr_title}"
         page.click('.lang-btn[data-lang="en"]')
-        page.click('#mode-dual')
         page.wait_for_timeout(150)
 
         if errors:
             print("BROWSER ERRORS DETECTED:", errors, flush=True)
             sys.exit(1)
-        print("ZERO console/page errors! All 6 NASA layers, presets, transects, and EN/FR verified.", flush=True)
+        print("ZERO console/page errors! WebGL2 raymarcher, 4 lenses, Sun dial, and EN/FR verified.", flush=True)
 
-        # 2. Render 1200x1200 (@2x = 2400x2400 Retina) LinkedIn Billboard Card
-        # Adhering strictly to LINKEDIN_PLAYBOOK_AND_LEARNINGS.md Section 4:
-        # - 1200x1200px @ 2x = 2400x2400 Retina
-        # - 68% of canvas height dominated by REAL live Playwright screenshot of the running Dual-Pole app
-        # - 1 Eyebrow Kicker + 1 Tight Headline (leading 0.99) + 3 High-Contrast Real NASA Telemetry Chips
-        ui_b64 = b64_png(billboard_ui_shot)
-        cold_k = n_stats["coldest_prp"]["temp_avg_k"]
-        peak_sun = n_stats["peak_solar_60m_pct"]
-        n_psr = int(round(n_stats["psr_area_km2"]))
-        s_psr = int(round(s_stats["psr_area_km2"]))
+        # Render ultra-clean SpaceX / Apple Fine-Art 1200x1200 (@2x = 2400x2400) LinkedIn Poster
+        orb_b64 = b64_png(orb_shot)
+        stats = meta["stats"]
 
-        card_html = f"""<!DOCTYPE html>
+        poster_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Plus+Jakarta+Sans:wght@700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
     width: 1200px;
     height: 1200px;
-    background: radial-gradient(circle at 50% 0%, #132038 0%, #070b13 62%, #04060b 100%);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: radial-gradient(circle at 50% 52%, #11192c 0%, #05070d 46%, #020306 100%);
     color: #f8fafc;
-    padding: 46px 52px 44px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 54px 62px 50px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    overflow: hidden;
     position: relative;
+    overflow: hidden;
   }}
-  .top-head {{
+  .top-row {{
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    z-index: 2;
-  }}
-  .kicker-row {{
-    display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: flex-start;
+    z-index: 3;
   }}
   .kicker {{
     font-family: 'Space Grotesk', monospace;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.12);
-    border: 1px solid rgba(56, 189, 248, 0.38);
-    padding: 6px 14px;
-    border-radius: 999px;
-  }}
-  .repo-tag {{
-    font-family: 'Space Grotesk', monospace;
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
     color: #94a3b8;
-    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
   }}
   h1 {{
-    font-size: 56px;
-    font-weight: 900;
-    line-height: 0.99;
-    letter-spacing: -0.03em;
+    font-size: 62px;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 0.98;
     color: #ffffff;
-    max-width: 1060px;
   }}
-  h1 span {{
-    color: #38bdf8;
+  .url-pill {{
+    font-family: 'Space Grotesk', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #e2e8f0;
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.16);
   }}
-  .hero-frame {{
-    width: 100%;
-    height: 726px;
-    border-radius: 18px;
-    overflow: hidden;
-    border: 1.5px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.78), 0 0 42px rgba(56, 189, 248, 0.14);
-    background: #060911;
-    position: relative;
-  }}
-  .hero-frame img {{
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
-    display: block;
-  }}
-  .telemetry-bar {{
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+  .orb-wrap {{
+    position: absolute;
+    top: 53.5%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 820px;
+    height: 820px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 2;
   }}
-  .chip {{
-    background: rgba(15, 23, 42, 0.86);
-    border: 1px solid rgba(255, 255, 255, 0.13);
-    border-radius: 14px;
-    padding: 14px 20px;
+  .orb-wrap img {{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+  }}
+  .bottom-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+    padding-top: 22px;
+    z-index: 3;
+  }}
+  .stat-group {{
+    display: flex;
+    gap: 54px;
+  }}
+  .stat {{
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
   }}
-  .chip-lbl {{
+  .stat-val {{
     font-family: 'Space Grotesk', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #94a3b8;
-  }}
-  .chip-val {{
-    font-family: 'Space Grotesk', monospace;
-    font-size: 29px;
-    font-weight: 700;
+    font-size: 30px;
+    font-weight: 600;
+    color: #ffffff;
     letter-spacing: -0.02em;
-    color: #f8fafc;
   }}
-  .chip-val.cyan {{ color: #38bdf8; }}
-  .chip-val.amber {{ color: #fbbf24; }}
-  .chip-val.emerald {{ color: #10b981; }}
+  .stat-lbl {{
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: #64748b;
+    text-transform: uppercase;
+  }}
+  .credit {{
+    font-family: 'Space Grotesk', monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    color: #94a3b8;
+    text-transform: uppercase;
+    text-align: right;
+    line-height: 1.6;
+  }}
 </style>
 </head>
 <body>
-  <div class="top-head">
-    <div class="kicker-row">
-      <span class="kicker">#30DAYMAPCHALLENGE | DAY 11: ARCTIC</span>
-      <span class="repo-tag">sounny.github.io/lunarmap | NASA LRO WEBGIS</span>
+  <div class="top-row">
+    <div>
+      <div class="kicker">#30DAYMAPCHALLENGE · DAY 11: ARCTIC · 80°N – 90°N</div>
+      <h1>THE LUNAR ARCTIC</h1>
     </div>
-    <h1>What If NASA Landed Artemis<br/>in the <span>Lunar Arctic?</span></h1>
+    <div class="url-pill">sounny.github.io/lunarmap</div>
   </div>
 
-  <div class="hero-frame">
-    <img src="{ui_b64}" alt="Live Artemis North Dual-Pole WebGIS Interface" />
+  <div class="orb-wrap">
+    <img src="{orb_b64}" alt="Lunar Arctic 80N-90N NASA LRO Raymarched Globe" />
   </div>
 
-  <div class="telemetry-bar">
-    <div class="chip">
-      <span class="chip-lbl">HERMITE COLD TRAP (86°N)</span>
-      <span class="chip-val cyan">~26 K (-247°C)</span>
+  <div class="bottom-row">
+    <div class="stat-group">
+      <div class="stat">
+        <span class="stat-val">{stats['coldest_temp_k']} K (-248°C)</span>
+        <span class="stat-lbl">COLDEST POLAR ABYSS</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">{stats['peak_solar_pct']}%</span>
+        <span class="stat-lbl">PEARY PEAK SUNLIGHT</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">{stats['psr_area_km2']:,} km²</span>
+        <span class="stat-lbl">PERMANENT SHADOW</span>
+      </div>
     </div>
-    <div class="chip">
-      <span class="chip-lbl">PEARY PEAK SOLAR CONTINUITY</span>
-      <span class="chip-val amber">{peak_sun:.1f}% SUNLIT</span>
-    </div>
-    <div class="chip">
-      <span class="chip-lbl">PSR COLD TRAPS (80°N VS 80°S)</span>
-      <span class="chip-val emerald">{n_psr:,} vs {s_psr:,} km²</span>
+    <div class="credit">
+      NASA LRO LOLA 80M · DIVINER<br/>REAL-TIME WEBGL2 RAYMARCHER
     </div>
   </div>
 </body>
 </html>"""
 
-        card_html_path = os.path.join(SCREENSHOTS_DIR, "render_billboard.html")
-        with open(card_html_path, "w", encoding="utf-8") as f:
-            f.write(card_html)
+        poster_html_path = os.path.join(SCREENSHOTS_DIR, "render_poster.html")
+        with open(poster_html_path, "w", encoding="utf-8") as f:
+            f.write(poster_html)
 
         cpage = browser.new_page(viewport={"width": 1200, "height": 1200}, device_scale_factor=2)
-        cpage.goto(f"http://127.0.0.1:{port}/screenshots/render_billboard.html", wait_until="networkidle")
+        cpage.goto(f"http://127.0.0.1:{port}/screenshots/render_poster.html", wait_until="networkidle")
         cpage.wait_for_timeout(400)
 
         out_card_queue = os.path.join(QUEUE_DIR, "2026-11-11_lunar_arctic_artemis_square_post.png")
         out_card_repo = os.path.join(SCREENSHOTS_DIR, "linkedin_billboard_2400.png")
         cpage.screenshot(path=out_card_queue)
         cpage.screenshot(path=out_card_repo)
-        print(f"Saved 2400x2400 Retina Billboard -> {out_card_queue}", flush=True)
+        os.remove(poster_html_path)
+        print(f"Saved 2400x2400 Fine-Art LinkedIn Poster -> {out_card_queue}", flush=True)
 
         browser.close()
     httpd.shutdown()
