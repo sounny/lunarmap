@@ -1,6 +1,6 @@
-# Lunar Arctic (80°N – 90°N) · Real-Time NASA LRO Orbital Atlas
+# Lunar Arctic (80°N - 90°N) · Real-Time NASA LRO Orbital Atlas
 
-> **#30DayMapChallenge · Day 11: Arctic**  
+> **Real-Time WebGL2 Planetary Cartography · NASA LRO 80m LOLA & Diviner**  
 > **Live Interactive Experience:** [https://sounny.github.io/lunarmap/](https://sounny.github.io/lunarmap/)  
 > **Planetary WebGIS Ecosystem:** [JSMARS (https://jsmars.sounny.com)](https://jsmars.sounny.com)
 

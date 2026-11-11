@@ -268,7 +268,7 @@ def main():
 <body>
   <div class="top-row">
     <div>
-      <div class="kicker">#30DAYMAPCHALLENGE · DAY 11: ARCTIC · 80°N – 90°N</div>
+      <div class="kicker">NASA LRO ORBITAL ATLAS · NORTH POLE · 80°N - 90°N</div>
       <h1>THE LUNAR ARCTIC</h1>
     </div>
     <div class="url-pill">sounny.github.io/lunarmap</div>
