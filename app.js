@@ -3,21 +3,25 @@
 
   const I18N = {
     en: {
-      eyebrow: 'NASA LRO · 80°N – 90°N',
+      eyebrow: 'NASA LRO · 80°N - 90°N',
       title: 'LUNAR ARCTIC',
-      subtitle: 'Sweep the grazing 1.54° polar sun across eternal peaks, 24.2 K cold traps, and NASA Artemis North landing ridges.',
-      fact_cold: 'Diviner Minimum (-249°C)',
-      fact_sun: 'Peary Peak Sunlight',
-      fact_psr: 'Permanent Shadow',
+      subtitle: 'Sweep the grazing 1.54° polar sun across eternal peaks, 24.7 K cold traps, and NASA Artemis North landing ridges.',
+      fact_cold: '-248°C Min',
+      fact_sun: 'Peak Sun',
+      fact_psr: 'Perm. Shadow',
+      sec_lenses: 'ORBITAL LENS',
+      sec_webgl: 'REAL-TIME GPU',
+      sun_horizon: '1.54° Polar Horizon Sun',
+      tune_sun: 'Min Solar',
+      tune_slope: 'Max Slope',
+      viable_lbl: 'Viable Ridge Area (≤5 km to Ice)',
+      probe_lbl: 'SURFACE PROBE',
       reset_view: 'Reset Orbit',
       far_side: '180° FAR SIDE',
       near_side: '0° EARTH',
       lbl_elev: 'ELEVATION',
       lbl_sun: 'SOLAR 18.6Y',
       lbl_temp: 'DIVINER AVG',
-      ch_pos: 'COORDINATES',
-      tune_sun: 'Solar',
-      tune_slope: 'Slope',
       mode_shadow: 'Sunlight',
       mode_light: 'Eternal Light',
       mode_cold: '24 K Ice Traps',
@@ -25,21 +29,25 @@
       loading: 'LOADING NASA LRO 80M TOPOGRAPHY',
     },
     fr: {
-      eyebrow: 'NASA LRO · 80°N – 90°N',
+      eyebrow: 'NASA LRO · 80°N - 90°N',
       title: 'ARCTIQUE LUNAIRE',
-      subtitle: 'Faites glisser le Soleil polaire rasant (1,54°) sur les pics éternels, les pièges à 24,2 K et les crêtes Artemis Nord.',
-      fact_cold: 'Minimum Diviner (-249 °C)',
-      fact_sun: 'Pic Solaire Peary',
-      fact_psr: 'Ombre Permanente',
+      subtitle: 'Faites glisser le Soleil polaire rasant (1,54°) sur les pics éternels, les pièges à 24,7 K et les crêtes Artemis Nord.',
+      fact_cold: 'Min -248 °C',
+      fact_sun: 'Pic Solaire',
+      fact_psr: 'Ombre Perm.',
+      sec_lenses: 'FILTRE ORBITAL',
+      sec_webgl: 'GPU TEMPS RÉEL',
+      sun_horizon: 'Soleil Polaire Rasant 1,54°',
+      tune_sun: 'Soleil Min',
+      tune_slope: 'Pente Max',
+      viable_lbl: 'Zone Viable (≤5 km Glace)',
+      probe_lbl: 'SONDE DE SURFACE',
       reset_view: 'Réinitialiser',
       far_side: '180° FACE CACHÉE',
       near_side: '0° TERRE',
       lbl_elev: 'ALTITUDE',
       lbl_sun: 'SOLEIL 18,6A',
       lbl_temp: 'MOY. DIVINER',
-      ch_pos: 'COORDONNÉES',
-      tune_sun: 'Soleil',
-      tune_slope: 'Pente',
       mode_shadow: 'Lumière',
       mode_light: 'Pics Éternels',
       mode_cold: 'Glace 24 K',
@@ -322,8 +330,11 @@
   const sunDialSvg = document.getElementById('sun-dial-svg');
   const btnResetZoom = document.getElementById('btn-reset-zoom');
   const btnPlaySun = document.getElementById('btn-play-sun');
-  const iconPlay = document.getElementById('icon-play');
-  const iconPause = document.getElementById('icon-pause');
+  const btnPlaySunMobile = document.getElementById('btn-play-sun-mobile');
+  const rngAzimuth = document.getElementById('rng-azimuth');
+  const panelSunAz = document.getElementById('panel-sun-az');
+  const scaleLabel = document.getElementById('scale-label');
+  const scaleLine = document.getElementById('scale-line');
   const artemisTuner = document.getElementById('artemis-tuner');
   const rngSun = document.getElementById('rng-sun');
   const rngSlope = document.getElementById('rng-slope');
@@ -397,7 +408,11 @@
     const norm = ((state.sunLonDeg + 540) % 360) - 180;
     const absDeg = Math.round(Math.abs(norm));
     const hemi = absDeg === 0 || absDeg === 180 ? '°' : norm > 0 ? '°E' : '°W';
-    sunAzLabel.textContent = `${absDeg}${hemi}`;
+    const labelText = `${absDeg}${hemi}`;
+    sunAzLabel.textContent = labelText;
+    if (panelSunAz) panelSunAz.textContent = labelText;
+    if (rngAzimuth) rngAzimuth.value = String(Math.round(norm));
+
     // Flip label side on left half so it never clips into the Moon disc
     if (x < -20) {
       sunAzLabel.setAttribute('x', '-14');
@@ -406,6 +421,23 @@
       sunAzLabel.setAttribute('x', '14');
       sunAzLabel.setAttribute('text-anchor', 'start');
     }
+  }
+
+  function updateScaleBar() {
+    if (!scaleLabel || !scaleLine) return;
+    const discW = moonDisc.clientWidth || 620;
+    const pxPerKm = (discW * state.zoom) / 608.0;
+    const steps = [200, 100, 50, 25, 10];
+    let chosen = 100;
+    for (const km of steps) {
+      const px = km * pxPerKm;
+      if (px <= 118 && px >= 44) {
+        chosen = km;
+        break;
+      }
+    }
+    scaleLabel.textContent = `${chosen} KM`;
+    scaleLine.style.width = `${Math.round(chosen * pxPerKm)}px`;
   }
 
   // ─── 3. WebGL2 Shader Setup ───
@@ -601,7 +633,9 @@
     const lm = state.meta.landmarks[state.activeLandmarkIdx];
     const isFr = state.lang === 'fr';
 
-    document.getElementById('story-step').textContent = `0${lm.index} / 0${n}`;
+    document.querySelectorAll('.lm-tab').forEach((tab) => {
+      tab.classList.toggle('active', Number(tab.dataset.idx) === state.activeLandmarkIdx);
+    });
     document.getElementById('story-tag').textContent = isFr ? lm.tag_fr : lm.tag_en;
     document.getElementById('story-title').textContent = isFr ? lm.name_fr : lm.name_en;
     document.getElementById('story-desc').textContent = isFr ? lm.desc_fr : lm.desc_en;
@@ -624,7 +658,9 @@
     document.querySelectorAll('.lens-btn').forEach((b) => {
       b.classList.toggle('active', b.dataset.mode === mode);
     });
-    artemisTuner.classList.toggle('hidden', mode !== 'artemis');
+    if (artemisTuner) {
+      artemisTuner.classList.toggle('collapsed', mode !== 'artemis');
+    }
     if (mode === 'artemis') updateArtemisViableArea();
   }
 
@@ -720,22 +756,42 @@
       draggingSun = false;
     });
 
-    // Play / Pause Sun Orbit
+    // Play / Pause Sun Orbit & Panel Azimuth Slider
     function syncPlayIcon() {
-      iconPlay.classList.toggle('hidden', state.orbitPlaying);
-      iconPause.classList.toggle('hidden', !state.orbitPlaying);
+      document.querySelectorAll('.icon-play').forEach((el) => {
+        el.classList.toggle('hidden-icon', state.orbitPlaying);
+      });
+      document.querySelectorAll('.icon-pause').forEach((el) => {
+        el.classList.toggle('hidden-icon', !state.orbitPlaying);
+      });
     }
-    btnPlaySun.addEventListener('click', () => {
+    const toggleOrbit = () => {
       state.orbitPlaying = !state.orbitPlaying;
       syncPlayIcon();
-    });
+    };
+    if (btnPlaySun) btnPlaySun.addEventListener('click', toggleOrbit);
+    if (btnPlaySunMobile) btnPlaySunMobile.addEventListener('click', toggleOrbit);
+
+    if (rngAzimuth) {
+      rngAzimuth.addEventListener('input', () => {
+        state.orbitPlaying = false;
+        syncPlayIcon();
+        state.sunLonDeg = parseFloat(rngAzimuth.value);
+        updateSunDialUI();
+      });
+    }
 
     // Mode Switching
     document.querySelectorAll('.lens-btn').forEach((btn) => {
       btn.addEventListener('click', () => setMode(btn.dataset.mode));
     });
 
-    // Story Card Prev / Next
+    // Story Card Tabs & Prev / Next
+    document.querySelectorAll('.lm-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        selectLandmark(Number(tab.dataset.idx), true);
+      });
+    });
     document.getElementById('prev-lm').addEventListener('click', () => {
       selectLandmark(state.activeLandmarkIdx - 1, true);
     });
@@ -843,6 +899,7 @@
     window.addEventListener('resize', () => {
       renderStarfield();
       resizeGL();
+      updateScaleBar();
     });
   }
 
@@ -889,6 +946,7 @@
       Math.abs(state.pan.y - prevPanY) > 1e-5
     ) {
       renderMoonOverlay();
+      updateScaleBar();
     }
 
     if (gl && demTex && sciTex) {
@@ -928,6 +986,7 @@
     renderStarfield();
     buildSunDialTicks();
     updateSunDialUI();
+    updateScaleBar();
     initWebGL();
     bindInteractions();
 

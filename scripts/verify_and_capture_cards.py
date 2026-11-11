@@ -75,37 +75,70 @@ def main():
         page.wait_for_timeout(300)
 
         # Capture Eternal Light mode
-        page.click('.lens-btn[data-mode="light"]')
+        page.click('#studio-rail .lens-btn[data-mode="light"]')
         page.wait_for_timeout(450)
         shot_light = os.path.join(SCREENSHOTS_DIR, "arctic_eternal_light.png")
         page.screenshot(path=shot_light)
 
         # Capture 24 K Ice Traps mode
-        page.click('.lens-btn[data-mode="cold"]')
+        page.click('#studio-rail .lens-btn[data-mode="cold"]')
         page.wait_for_timeout(450)
         shot_cold = os.path.join(SCREENSHOTS_DIR, "arctic_cold_traps.png")
         page.screenshot(path=shot_cold)
 
         # Capture Artemis Sites mode
-        page.click('.lens-btn[data-mode="artemis"]')
+        page.click('#studio-rail .lens-btn[data-mode="artemis"]')
         page.wait_for_timeout(450)
         shot_artemis = os.path.join(SCREENSHOTS_DIR, "arctic_artemis_sites.png")
         page.screenshot(path=shot_artemis)
 
+        # Verify Laptop 1280x720 (with Sunlight & Artemis drawer)
+        page.click('#studio-rail .lens-btn[data-mode="shadow"]')
+        page.set_viewport_size({"width": 1280, "height": 720})
+        page.wait_for_timeout(350)
+        shot_laptop = os.path.join(SCREENSHOTS_DIR, "verify_laptop_1280x720.png")
+        page.screenshot(path=shot_laptop)
+
+        # Verify Mobile 390x844 (confirm mobile layout remains intact)
+        page.set_viewport_size({"width": 390, "height": 844})
+        page.wait_for_timeout(350)
+        page.click('.mobile-dock .lens-btn[data-mode="light"]')
+        page.wait_for_timeout(350)
+        shot_mobile = os.path.join(SCREENSHOTS_DIR, "verify_mobile_390x844.png")
+        page.screenshot(path=shot_mobile)
+        page.click('.mobile-dock .lens-btn[data-mode="shadow"]')
+
+        # Restore Desktop 1440x900
+        page.set_viewport_size({"width": 1440, "height": 900})
+        page.wait_for_timeout(350)
+
         # Capture pure circular Moon disc close-up for ultra-clean SpaceX-style LinkedIn Billboard
-        page.click('.lens-btn[data-mode="shadow"]')
-        page.evaluate("document.getElementById('story-card').style.visibility='hidden'; document.getElementById('starfield').style.visibility='hidden'; document.getElementById('cosmos').style.background='transparent'; document.body.style.background='transparent';")
+        page.evaluate("""
+          document.getElementById('studio-rail').style.visibility='hidden';
+          document.querySelector('.utility-bar').style.visibility='hidden';
+          document.querySelector('.carto-stamp').style.visibility='hidden';
+          document.getElementById('starfield').style.visibility='hidden';
+          document.getElementById('cosmos').style.background='transparent';
+          document.body.style.background='transparent';
+        """)
         page.wait_for_timeout(450)
         orb_shot = os.path.join(SCREENSHOTS_DIR, "arctic_orb_stage.png")
         page.locator("#orb-stage").screenshot(path=orb_shot, omit_background=True)
-        page.evaluate("document.getElementById('story-card').style.visibility='visible'; document.getElementById('starfield').style.visibility='visible'; document.getElementById('cosmos').style.background=''; document.body.style.background='';")
+        page.evaluate("""
+          document.getElementById('studio-rail').style.visibility='visible';
+          document.querySelector('.utility-bar').style.visibility='visible';
+          document.querySelector('.carto-stamp').style.visibility='visible';
+          document.getElementById('starfield').style.visibility='visible';
+          document.getElementById('cosmos').style.background='';
+          document.body.style.background='';
+        """)
 
-        # Test FR i18n parity
-        page.click('.lang-btn[data-lang="fr"]')
+        # Test FR i18n parity & slider sync
+        page.click('.utility-bar .lang-btn[data-lang="fr"]')
         page.wait_for_timeout(150)
-        fr_title = page.locator(".title").inner_text()
+        fr_title = page.locator("#studio-rail .title").inner_text()
         assert "ARCTIQUE" in fr_title, f"French i18n failed: {fr_title}"
-        page.click('.lang-btn[data-lang="en"]')
+        page.click('.utility-bar .lang-btn[data-lang="en"]')
         page.wait_for_timeout(150)
 
         if errors:

@@ -20,10 +20,10 @@ Drag the **360° Orbital Sun Ring** (or press **Play**) to raymarch live lunar s
 
 | Lens | Physical Phenomenon | Empirical NASA Source |
 | :--- | :--- | :--- |
-| **Sunlight** | Real-time 52-step 3D spherical horizon raymarching with `0.53°` solar-disc penumbra and Lommel-Seeliger lunar regolith reflectance. | LRO LOLA `LDEM_80N_80M` (`80 m/px`, `0.13 m` 16-bit vertical precision) |
+| **Sunlight** | Real-time 40-step 3D spherical horizon raymarching with `0.53°` solar-disc penumbra and Lommel-Seeliger lunar regolith reflectance. | LRO LOLA `LDEM_80N_80M` (`80 m/px`, `0.13 m` 16-bit vertical precision) |
 | **Eternal Light** | Highlights narrow polar crests along **Peary** and **Whipple** craters that remain sunlit up to **89.7%** of the 18.6-year lunar nutation cycle. | Mazarico et al. (2011) `AVGVISIB_85N_060M` & `75N_120M` |
-| **24 K Ice Traps** | Reveals **17,098 km²** of permanently shadowed cold traps and **3,483 km²** of thermally stable surface water frost down to **~24.2–26 K (-249°C to -247°C)**, colder than Pluto. | Paige et al. (2010) UCLA Diviner Level-5 `LRO-L-DLRE-5-PRP-V2.0` |
-| **Artemis Sites** | Live multi-criteria landing-zone solver isolating flat (`≤8°`), continuously sunlit (`≥72%`) ridges within rover range (`≤3.5 km`) of water-ice cold traps for a future **Artemis North** outpost. | Coupled LOLA Slope + Mazarico Illumination + PSR Proximity |
+| **24 K Ice Traps** | Reveals **17,535 km²** of permanently shadowed cold traps and **3,483 km²** of thermally stable surface water frost down to **24.7 K (-248°C)**, colder than Pluto. | Paige et al. (2010) UCLA Diviner Level-5 `LRO-L-DLRE-5-PRP-V2.0` |
+| **Artemis Sites** | Live multi-criteria landing-zone solver isolating flat (`≤10°`), continuously sunlit (`≥60%`) ridges within rover range (`≤5.0 km`) of water-ice cold traps for a future **Artemis North** outpost. | Coupled LOLA Slope + Mazarico Illumination + PSR Proximity |
 
 | Eternal Light (`89.7%` Peak) | 24 K Cryogenic Ice Traps |
 | :---: | :---: |
