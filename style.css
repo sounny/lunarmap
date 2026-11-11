@@ -286,7 +286,7 @@ html, body {
 .dot-shadow  { background: #f8fafc; box-shadow: 0 0 8px rgba(248, 250, 252, 0.7); }
 .dot-light   { background: var(--gold); box-shadow: 0 0 8px rgba(251, 191, 36, 0.85); }
 .dot-cold    { background: var(--cyan); box-shadow: 0 0 8px rgba(56, 189, 248, 0.85); }
-.dot-artemis { background: var(--emerald); box-shadow: 0 0 8px rgba(52, 211, 153, 0.85); }
+.dot-outpost { background: var(--emerald); box-shadow: 0 0 8px rgba(52, 211, 153, 0.85); }
 
 /* Sun Azimuth Bar */
 .sun-bar {
@@ -364,8 +364,8 @@ input[type="range"] {
   box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
 }
 
-/* Inline Expandable Artemis Criteria Drawer */
-.artemis-drawer {
+/* Inline Expandable Outpost Criteria Drawer */
+.outpost-drawer {
   margin-top: 8px;
   padding: 9px 11px;
   border-radius: 12px;
@@ -377,7 +377,7 @@ input[type="range"] {
   transition: opacity 200ms var(--ease-out);
 }
 
-.artemis-drawer.collapsed {
+.outpost-drawer.collapsed {
   display: none;
 }
 
@@ -398,7 +398,7 @@ input[type="range"] {
   font-variant-numeric: tabular-nums;
 }
 
-.artemis-drawer input[type="range"]::-webkit-slider-thumb {
+.outpost-drawer input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 12px;
   height: 12px;

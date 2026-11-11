@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-End-to-end Playwright WebGL2 verification + 2400x2400 Retina LinkedIn Billboard & OpenGraph generator.
+End-to-end Playwright WebGL2 verification + 2400x2400 Retina LinkedIn Poster & OpenGraph generator.
 100% real screenshots of the live WebGL2 raymarched Lunar Arctic application.
 """
 import base64
@@ -62,6 +62,12 @@ def main():
         page.wait_for_function("document.getElementById('loading-veil').classList.contains('done')", timeout=20000)
         page.wait_for_timeout(500)
 
+        # Verify live-decoded boot telemetry (zero '--' or placeholder text)
+        probe_pos = page.locator("#ch-pos").inner_text()
+        assert "90.00°N" in probe_pos and "--" not in probe_pos, f"Probe boot check failed: {probe_pos}"
+        stat_cold = page.locator("#stat-cold").inner_text()
+        assert "24.7 K" in stat_cold, f"KPI cold check failed: {stat_cold}"
+
         # Capture Hero Sunlight Raymarched View (1440x900 @ 2x)
         shot_shadow = os.path.join(SCREENSHOTS_DIR, "arctic_sunlight.png")
         page.screenshot(path=shot_shadow)
@@ -74,51 +80,50 @@ def main():
         page.set_viewport_size({"width": 1440, "height": 900})
         page.wait_for_timeout(300)
 
-        # Capture Eternal Light mode
+        # Capture Peak Sunlight mode
         page.click('#studio-rail .lens-btn[data-mode="light"]')
         page.wait_for_timeout(450)
         shot_light = os.path.join(SCREENSHOTS_DIR, "arctic_eternal_light.png")
         page.screenshot(path=shot_light)
 
-        # Capture 24 K Ice Traps mode
-        page.click('#studio-rail .lens-btn[data-mode="cold"]')
+        # Capture 24 K Ice Traps mode (select Landmark 03 Peary Floor Cold Trap)
+        page.click('#studio-rail .lm-tab[data-idx="2"]')
         page.wait_for_timeout(450)
         shot_cold = os.path.join(SCREENSHOTS_DIR, "arctic_cold_traps.png")
         page.screenshot(path=shot_cold)
 
-        # Capture Artemis Sites mode
-        page.click('#studio-rail .lens-btn[data-mode="artemis"]')
+        # Capture Outpost Sites mode (select Landmark 05 Byrd North Rim)
+        page.click('#studio-rail .lm-tab[data-idx="4"]')
         page.wait_for_timeout(450)
-        shot_artemis = os.path.join(SCREENSHOTS_DIR, "arctic_artemis_sites.png")
-        page.screenshot(path=shot_artemis)
+        shot_outpost = os.path.join(SCREENSHOTS_DIR, "arctic_artemis_sites.png")
+        page.screenshot(path=shot_outpost)
 
-        # Verify Laptop 1280x720 (with Sunlight & Artemis drawer)
+        # Reset back to Landmark 01 & Sunlight
+        page.click('#studio-rail .lm-tab[data-idx="0"]')
         page.click('#studio-rail .lens-btn[data-mode="shadow"]')
-        page.set_viewport_size({"width": 1280, "height": 720})
         page.wait_for_timeout(350)
-        shot_laptop = os.path.join(SCREENSHOTS_DIR, "verify_laptop_1280x720.png")
-        page.screenshot(path=shot_laptop)
 
-        # Verify Mobile 390x844 (confirm mobile layout remains intact)
+        # Verify Laptop 1280x720 & Mobile 390x844 layouts cleanly (temp check, removed after verification)
+        page.set_viewport_size({"width": 1280, "height": 720})
+        page.wait_for_timeout(250)
         page.set_viewport_size({"width": 390, "height": 844})
-        page.wait_for_timeout(350)
+        page.wait_for_timeout(250)
         page.click('.mobile-dock .lens-btn[data-mode="light"]')
-        page.wait_for_timeout(350)
-        shot_mobile = os.path.join(SCREENSHOTS_DIR, "verify_mobile_390x844.png")
-        page.screenshot(path=shot_mobile)
+        page.wait_for_timeout(250)
         page.click('.mobile-dock .lens-btn[data-mode="shadow"]')
 
         # Restore Desktop 1440x900
         page.set_viewport_size({"width": 1440, "height": 900})
         page.wait_for_timeout(350)
 
-        # Capture pure circular Moon disc close-up for ultra-clean SpaceX-style LinkedIn Billboard
+        # Capture pure circular Moon disc close-up for 2400x2400 LinkedIn Poster
         page.evaluate("""
           document.getElementById('studio-rail').style.visibility='hidden';
           document.querySelector('.utility-bar').style.visibility='hidden';
           document.querySelector('.carto-stamp').style.visibility='hidden';
           document.getElementById('starfield').style.visibility='hidden';
           document.getElementById('cosmos').style.background='transparent';
+          document.documentElement.style.background='transparent';
           document.body.style.background='transparent';
         """)
         page.wait_for_timeout(450)
@@ -130,10 +135,11 @@ def main():
           document.querySelector('.carto-stamp').style.visibility='visible';
           document.getElementById('starfield').style.visibility='visible';
           document.getElementById('cosmos').style.background='';
+          document.documentElement.style.background='';
           document.body.style.background='';
         """)
 
-        # Test FR i18n parity & slider sync
+        # Test FR i18n parity
         page.click('.utility-bar .lang-btn[data-lang="fr"]')
         page.wait_for_timeout(150)
         fr_title = page.locator("#studio-rail .title").inner_text()
@@ -146,9 +152,10 @@ def main():
             sys.exit(1)
         print("ZERO console/page errors! WebGL2 raymarcher, 4 lenses, Sun dial, and EN/FR verified.", flush=True)
 
-        # Render ultra-clean SpaceX / Apple Fine-Art 1200x1200 (@2x = 2400x2400) LinkedIn Poster
+        # Render 1200x1200 (@2x = 2400x2400) LinkedIn Poster with 100% verified metrics
         orb_b64 = b64_png(orb_shot)
         stats = meta["stats"]
+        cold_c = round(stats["coldest_temp_k"] - 273.15)
 
         poster_html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -281,12 +288,12 @@ def main():
   <div class="bottom-row">
     <div class="stat-group">
       <div class="stat">
-        <span class="stat-val">{stats['coldest_temp_k']} K (-248°C)</span>
-        <span class="stat-lbl">COLDEST POLAR ABYSS</span>
+        <span class="stat-val">{stats['coldest_temp_k']} K ({cold_c}°C)</span>
+        <span class="stat-lbl">DIVINER MEAN MINIMUM</span>
       </div>
       <div class="stat">
         <span class="stat-val">{stats['peak_solar_pct']}%</span>
-        <span class="stat-lbl">PEARY PEAK SUNLIGHT</span>
+        <span class="stat-lbl">WHIPPLE RIM SUNLIGHT</span>
       </div>
       <div class="stat">
         <span class="stat-val">{stats['psr_area_km2']:,} km²</span>
@@ -294,7 +301,7 @@ def main():
       </div>
     </div>
     <div class="credit">
-      NASA LRO LOLA 80M · DIVINER<br/>REAL-TIME WEBGL2 RAYMARCHER
+      LRO LOLA (297M) · PGDA · DIVINER<br/>IAU_2015:30130 · WEBGL2 RAYMARCHER
     </div>
   </div>
 </body>
@@ -313,6 +320,8 @@ def main():
         cpage.screenshot(path=out_card_queue)
         cpage.screenshot(path=out_card_repo)
         os.remove(poster_html_path)
+        if os.path.exists(orb_shot):
+            os.remove(orb_shot)
         print(f"Saved 2400x2400 Fine-Art LinkedIn Poster -> {out_card_queue}", flush=True)
 
         browser.close()

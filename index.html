@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lunar Arctic · 80°N–90°N Orbital Atlas</title>
-  <meta name="description" content="Real-time WebGL2 raymarched atlas of the Lunar Arctic (80°N–90°N) built from NASA LRO 80m LOLA laser altimetry, Mazarico solar illumination, and Diviner 24.7 K cryogenic permafrost observations." />
+  <title>Lunar Arctic · 80°N-90°N Orbital Atlas</title>
+  <meta name="description" content="Real-time WebGL2 raymarched atlas of the Lunar Arctic (80°N-90°N) built from NASA LRO LOLA laser altimetry (296.9 m/px), GSFC PGDA polar solar illumination, and Diviner 24.7 K cryogenic observations." />
   <link rel="canonical" href="https://sounny.github.io/lunarmap/" />
 
   <!-- Open Graph & Twitter -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Lunar Arctic (80°N–90°N) · Real-Time NASA LRO Orbital Atlas" />
-  <meta property="og:description" content="Sweep the grazing 1.54° polar sun across Peary's Peaks of Eternal Light, Hermite's 24.7 K (-248°C) cold traps, and NASA Artemis North landing ridges." />
+  <meta property="og:title" content="Lunar Arctic (80°N-90°N) · Real-Time NASA LRO Orbital Atlas" />
+  <meta property="og:description" content="Sweep the grazing +1.54° summer polar sun across Whipple's 89.8% sunlit rim, 24.7 K (-248°C) cold traps, and polar outpost landing ridges." />
   <meta property="og:url" content="https://sounny.github.io/lunarmap/" />
   <meta property="og:image" content="https://sounny.github.io/lunarmap/og-card.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Lunar Arctic (80°N–90°N) · Real-Time NASA LRO Orbital Atlas" />
-  <meta name="twitter:description" content="Interactive WebGL2 raymarched topography of the Moon's North Pole powered by empirical NASA LRO LOLA & Diviner datasets." />
+  <meta name="twitter:title" content="Lunar Arctic (80°N-90°N) · Real-Time NASA LRO Orbital Atlas" />
+  <meta name="twitter:description" content="Interactive WebGL2 raymarched topography of the Moon's North Pole powered by empirical NASA LRO LOLA, PGDA, and Diviner datasets." />
   <meta name="twitter:image" content="https://sounny.github.io/lunarmap/og-card.png" />
 
   <!-- Typography -->
@@ -32,18 +32,19 @@
       {
         "@type": "WebApplication",
         "@id": "https://sounny.github.io/lunarmap/#app",
-        "name": "Lunar Arctic (80°N–90°N) Orbital Atlas",
+        "name": "Lunar Arctic (80°N-90°N) Orbital Atlas",
         "url": "https://sounny.github.io/lunarmap/",
         "applicationCategory": "ScientificApplication",
         "operatingSystem": "Web Browser",
         "author": { "@id": "https://sounny.com/#person" },
         "about": {
           "@type": "Dataset",
-          "name": "NASA LRO LOLA 80m DEM, Mazarico Polar Illumination, and Diviner Level-5 Polar Resource Products (80°N–90°N)",
+          "name": "NASA LRO LOLA North Polar DEM (296.9 m/px from LDEM_80N_80M), GSFC PGDA Product #69 Polar Illumination, and Diviner Level-5 Polar Resource Products V2.0 (80°N-90°N)",
           "citation": [
             "Smith et al. (2010), Geophys. Res. Lett. 37, L18204",
-            "Mazarico et al. (2011), Icarus 211, 1066-1081",
-            "Paige et al. (2010), Science 330, 479-482"
+            "Mazarico et al. (2011), Icarus 211(2), 1066-1081; NASA GSFC PGDA Product #69 (2016)",
+            "Paige, Sullivan & Williams (2018), LRO-L-DLRE-5-PRP-V2.0, NASA PDS (doi:10.17189/wj0s-w188)",
+            "Williams et al. (2019), J. Geophys. Res.: Planets 124(10), 2505-2521"
           ]
         }
       },
@@ -71,7 +72,7 @@
   </script>
 </head>
 <body>
-  <h1 class="sr-only">Lunar Arctic (80°N–90°N): Real-Time NASA LRO Raymarched Orbital Atlas</h1>
+  <h1 class="sr-only">Lunar Arctic (80°N-90°N): Real-Time NASA LRO Raymarched Orbital Atlas</h1>
 
   <!-- Deep Space Starlight Backdrop -->
   <canvas id="starfield" aria-hidden="true"></canvas>
@@ -82,7 +83,7 @@
     <!-- Mobile-Only Compact Top Bar (Preserves Great Mobile Layout) -->
     <header class="mobile-topbar">
       <div>
-        <div class="m-eyebrow" data-i18n="eyebrow">NASA LRO · 80°N – 90°N</div>
+        <div class="m-eyebrow" data-i18n="eyebrow">NASA LRO · 80°N - 90°N</div>
         <div class="m-title" data-i18n="title">LUNAR ARCTIC</div>
       </div>
       <div class="m-actions">
@@ -104,25 +105,25 @@
       <!-- 1. Masthead & Polar Benchmark Strip -->
       <section class="rail-section rail-header">
         <div class="eyebrow-row">
-          <span class="eyebrow" data-i18n="eyebrow">NASA LRO · 80°N – 90°N</span>
-          <span class="live-chip"><span class="live-dot"></span>80M DEM</span>
+          <span class="eyebrow" data-i18n="eyebrow">NASA LRO · 80°N - 90°N</span>
+          <span class="live-chip"><span class="live-dot"></span>297M DEM</span>
         </div>
         <div class="title" data-i18n="title">LUNAR ARCTIC</div>
         <p class="subtitle" data-i18n="subtitle">
-          Sweep the grazing 1.54° polar sun across eternal peaks, 24.7 K cold traps, and NASA Artemis North landing ridges.
+          Sweep the grazing +1.54° summer polar sun across sunlit crater rims, 24.7 K cold traps, and polar outpost landing ridges.
         </p>
 
         <div class="kpi-strip" aria-label="Lunar Arctic Empirical Benchmarks">
           <div class="kpi-cell">
-            <span class="kpi-val" id="stat-cold">24.7 K</span>
-            <span class="kpi-lbl" data-i18n="fact_cold">-248°C Min</span>
+            <span class="kpi-val" id="stat-cold">--</span>
+            <span class="kpi-lbl" id="stat-cold-lbl" data-i18n="fact_cold">-248°C Min</span>
           </div>
           <div class="kpi-cell">
-            <span class="kpi-val" id="stat-sun">89.7%</span>
+            <span class="kpi-val" id="stat-sun">--</span>
             <span class="kpi-lbl" data-i18n="fact_sun">Peak Sun</span>
           </div>
           <div class="kpi-cell">
-            <span class="kpi-val" id="stat-psr">17,535 km²</span>
+            <span class="kpi-val" id="stat-psr">--</span>
             <span class="kpi-lbl" data-i18n="fact_psr">Perm. Shadow</span>
           </div>
         </div>
@@ -142,15 +143,15 @@
           </button>
           <button class="lens-btn" data-mode="light" type="button">
             <span class="lens-dot dot-light"></span>
-            <span data-i18n="mode_light">Eternal Light</span>
+            <span data-i18n="mode_light">Peak Sunlight</span>
           </button>
           <button class="lens-btn" data-mode="cold" type="button">
             <span class="lens-dot dot-cold"></span>
             <span data-i18n="mode_cold">24 K Ice Traps</span>
           </button>
-          <button class="lens-btn" data-mode="artemis" type="button">
-            <span class="lens-dot dot-artemis"></span>
-            <span data-i18n="mode_artemis">Artemis Sites</span>
+          <button class="lens-btn" data-mode="outpost" type="button">
+            <span class="lens-dot dot-outpost"></span>
+            <span data-i18n="mode_outpost">Outpost Sites</span>
           </button>
         </div>
 
@@ -162,15 +163,15 @@
           </button>
           <div class="sun-slider-col">
             <div class="sun-slider-top">
-              <span data-i18n="sun_horizon">1.54° Polar Horizon Sun</span>
+              <span data-i18n="sun_horizon">+1.54° Summer Horizon Sun</span>
               <strong id="panel-sun-az">132°E</strong>
             </div>
             <input type="range" id="rng-azimuth" min="-180" max="180" step="1" value="132" aria-label="Solar Azimuth Longitude" />
           </div>
         </div>
 
-        <!-- Inline Expandable Artemis Criteria Tuner -->
-        <div class="artemis-drawer collapsed" id="artemis-tuner">
+        <!-- Inline Expandable Outpost Criteria Tuner -->
+        <div class="outpost-drawer collapsed" id="outpost-tuner">
           <div class="tuner-row">
             <span data-i18n="tune_sun">Min Solar</span>
             <input type="range" id="rng-sun" min="45" max="85" step="1" value="60" />
@@ -182,8 +183,8 @@
             <strong id="val-slope">≤10.0°</strong>
           </div>
           <div class="tuner-summary">
-            <span data-i18n="viable_lbl">Viable Ridge Area (≤5 km to Ice)</span>
-            <strong id="val-viable">55.3 km²</strong>
+            <span data-i18n="viable_lbl">Viable Ridge Area (≤5 km to PSR)</span>
+            <strong id="val-viable">--</strong>
           </div>
         </div>
       </section>
@@ -208,48 +209,46 @@
           </div>
         </div>
 
-        <div class="story-tag" id="story-tag">PEAK OF ETERNAL LIGHT · ARTEMIS BASE #1</div>
-        <h2 class="story-title" id="story-title">Peary-Whipple Summit</h2>
-        <p class="story-desc" id="story-desc">
-          Bathed in grazing sunlight up to 89.7% of the 18.6-year lunar cycle while overlooking permanently shadowed water-ice craters.
-        </p>
+        <div class="story-tag" id="story-tag">--</div>
+        <h2 class="story-title" id="story-title">--</h2>
+        <p class="story-desc" id="story-desc">--</p>
 
         <div class="story-metrics">
           <div class="sm-cell">
             <span class="sm-lbl" data-i18n="lbl_elev">ELEVATION</span>
-            <span class="sm-val" id="sm-elev">+438 m</span>
+            <span class="sm-val" id="sm-elev">--</span>
           </div>
           <div class="sm-cell">
             <span class="sm-lbl" data-i18n="lbl_sun">SOLAR 18.6Y</span>
-            <span class="sm-val" id="sm-sun">89.7%</span>
+            <span class="sm-val" id="sm-sun">--</span>
           </div>
           <div class="sm-cell">
             <span class="sm-lbl" data-i18n="lbl_temp">DIVINER AVG</span>
-            <span class="sm-val" id="sm-temp">53.5 K</span>
+            <span class="sm-val" id="sm-temp">--</span>
           </div>
         </div>
 
-        <div class="story-coords" id="story-coords">89.37°N · 128.1°E · LRO LOLA 80M</div>
+        <div class="story-coords" id="story-coords">--</div>
       </section>
 
       <!-- 4. Grounded Live Surface Probe Telemetry -->
       <footer class="rail-section rail-probe" id="cursor-hud">
         <div class="probe-top">
           <span class="sec-title" data-i18n="probe_lbl">SURFACE PROBE</span>
-          <span class="probe-coords" id="ch-pos">90.00°N · 0.0°</span>
+          <span class="probe-coords" id="ch-pos">--</span>
         </div>
         <div class="probe-grid">
           <div class="pg-item">
             <span class="pg-lbl" data-i18n="lbl_elev">ELEVATION</span>
-            <span class="pg-val" id="ch-elev">+18 m</span>
+            <span class="pg-val" id="ch-elev">--</span>
           </div>
           <div class="pg-item">
             <span class="pg-lbl" data-i18n="lbl_sun">SOLAR 18.6Y</span>
-            <span class="pg-val" id="ch-sun">52.4%</span>
+            <span class="pg-val" id="ch-sun">--</span>
           </div>
           <div class="pg-item">
             <span class="pg-lbl" data-i18n="lbl_temp">DIVINER AVG</span>
-            <span class="pg-val" id="ch-temp">73 K</span>
+            <span class="pg-val" id="ch-temp">--</span>
           </div>
         </div>
       </footer>
@@ -311,7 +310,7 @@
           <span class="scale-label" id="scale-label">100 KM</span>
           <div class="scale-line" id="scale-line"></div>
         </div>
-        <span class="crs-stamp">IAU:2015:30110 · SCROLL TO ZOOM</span>
+        <span class="crs-stamp">IAU_2015:30130 · SCROLL TO ZOOM</span>
       </div>
     </section>
 
@@ -326,20 +325,20 @@
         <span class="lens-dot dot-shadow"></span><span data-i18n="mode_shadow">Sunlight</span>
       </button>
       <button class="lens-btn" data-mode="light" type="button">
-        <span class="lens-dot dot-light"></span><span data-i18n="mode_light">Eternal Light</span>
+        <span class="lens-dot dot-light"></span><span data-i18n="mode_light">Peak Sunlight</span>
       </button>
       <button class="lens-btn" data-mode="cold" type="button">
         <span class="lens-dot dot-cold"></span><span data-i18n="mode_cold">24 K Ice Traps</span>
       </button>
-      <button class="lens-btn" data-mode="artemis" type="button">
-        <span class="lens-dot dot-artemis"></span><span data-i18n="mode_artemis">Artemis Sites</span>
+      <button class="lens-btn" data-mode="outpost" type="button">
+        <span class="lens-dot dot-outpost"></span><span data-i18n="mode_outpost">Outpost Sites</span>
       </button>
     </div>
 
     <!-- Minimal Loading Veil -->
     <div class="loading-veil" id="loading-veil">
       <div class="veil-ring"></div>
-      <span class="veil-label" data-i18n="loading">LOADING NASA LRO 80M TOPOGRAPHY</span>
+      <span class="veil-label" data-i18n="loading">LOADING NASA LRO POLAR TOPOGRAPHY</span>
     </div>
 
   </main>
