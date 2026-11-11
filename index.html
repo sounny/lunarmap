@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Artemis North | Lunar Arctic vs. South Pole Mission Trade-Study Atlas</title>
+  <meta name="description" content="Interactive planetary GIS and NASA Artemis landing-site solver comparing the Lunar Arctic (80N-90N) against the Lunar South Pole (80S-90S) using empirical LRO LOLA, Mazarico illumination, and Diviner radiometer datasets." />
+  <link rel="canonical" href="https://sounny.github.io/lunarmap/" />
+
+  <!-- Open Graph & Social Cards -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Artemis North: What If Humanity Landed in the Lunar Arctic?" />
+  <meta property="og:description" content="Interactive NASA LRO LOLA + Diviner polar stereographic atlas and real-time Artemis HLS landing-zone solver across 80N-90N and 80S-90S." />
+  <meta property="og:url" content="https://sounny.github.io/lunarmap/" />
+  <meta property="og:image" content="https://sounny.github.io/lunarmap/og-card.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Artemis North: Lunar Arctic Mission Trade-Study Atlas" />
+  <meta name="twitter:description" content="Explore 26 K cold traps in Hermite Crater, Peaks of Eternal Light on Peary Rim, and live Artemis HLS landing suitability across both lunar poles." />
+  <meta name="twitter:image" content="https://sounny.github.io/lunarmap/og-card.png" />
+
+  <!-- Fonts & Monoline Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- 2-Way Linked Schema.org Knowledge Graph -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://sounny.github.io/lunarmap/#app",
+        "name": "Artemis North: Lunar Arctic vs. South Pole Mission Trade-Study Atlas",
+        "url": "https://sounny.github.io/lunarmap/",
+        "applicationCategory": "ScientificApplication",
+        "operatingSystem": "Web Browser",
+        "author": { "@id": "https://sounny.com/#person" },
+        "about": {
+          "@type": "Dataset",
+          "name": "NASA LRO LOLA, Diviner PRP V2.0, and Polar Illumination Stereographic Grids (80-90 N/S)",
+          "citation": [
+            "Smith et al. (2010), Geophys. Res. Lett. 37, L18204",
+            "Mazarico et al. (2011), Icarus 211, 1066-1081",
+            "Paige et al. (2010), Science 330, 479-482"
+          ]
+        }
+      },
+      {
+        "@type": "Person",
+        "@id": "https://sounny.com/#person",
+        "name": "Moulay Anwar Sounny-Slitine",
+        "url": "https://sounny.com",
+        "jobTitle": "Assistant Professor of Earth Observation, GNSS, and GeoAI",
+        "affiliation": {
+          "@type": "CollegeOrUniversity",
+          "name": "International Space University"
+        },
+        "sameAs": [
+          "https://www.wikidata.org/wiki/Q140745446",
+          "https://orcid.org/0000-0001-6669-9246",
+          "https://scholar.google.com/citations?user=7xUuX4QAAAAJ",
+          "https://www.webofscience.com/wos/author/record/N-5118-2017",
+          "https://github.com/sounny",
+          "https://www.linkedin.com/in/sounny/"
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <h1 class="sr-only">Artemis North: Interactive Lunar Arctic and South Pole Mission Trade-Study Atlas</h1>
+
+  <!-- Top Command Bar -->
+  <header class="topbar">
+    <div class="brand-group">
+      <div class="brand-mark" aria-hidden="true"></div>
+      <div class="brand-titles">
+        <span class="brand-kicker" data-i18n="kicker">#30DAYMAPCHALLENGE DAY 11: ARCTIC | PLANETARY GIS</span>
+        <span class="brand-name" data-i18n="app_title">ARTEMIS NORTH: The Lunar Arctic Trade-Study Atlas</span>
+      </div>
+    </div>
+
+    <nav class="mode-switcher" aria-label="Polar Viewport Mode">
+      <button class="mode-btn" data-mode="north" id="mode-north">
+        <i class="fa-solid fa-compass"></i>
+        <span data-i18n="mode_north">Lunar Arctic (80°N-90°N)</span>
+      </button>
+      <button class="mode-btn active" data-mode="dual" id="mode-dual">
+        <i class="fa-solid fa-table-columns"></i>
+        <span data-i18n="mode_dual">Dual-Pole Trade Study</span>
+      </button>
+      <button class="mode-btn" data-mode="south" id="mode-south">
+        <i class="fa-solid fa-satellite"></i>
+        <span data-i18n="mode_south">Artemis South (80°S-90°S)</span>
+      </button>
+    </nav>
+
+    <div class="header-actions">
+      <div class="lang-toggle" role="group" aria-label="Language Switcher">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="fr">FR</button>
+      </div>
+      <a class="icon-pill" href="https://jsmars.sounny.com" target="_blank" rel="noopener">
+        <i class="fa-solid fa-globe"></i>
+        <span>JSMARS</span>
+      </a>
+      <a class="icon-pill" href="https://github.com/sounny/lunarmap" target="_blank" rel="noopener">
+        <i class="fa-brands fa-github"></i>
+        <span>GitHub</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main 3-Column Mission Workspace -->
+  <main class="workspace">
+
+    <!-- Left Controls Sidebar -->
+    <aside class="sidebar-left" aria-label="Scientific Layers and Artemis Engineering Solver">
+
+      <!-- 1. Orbital Scientific Layers -->
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="section-title"><i class="fa-solid fa-layer-group"></i> <span data-i18n="sec_layers">NASA LRO Scientific Layers</span></span>
+        </div>
+        <div class="layer-list" id="layer-list">
+          <button class="layer-btn active" data-layer="composite">
+            <span class="layer-key">1</span>
+            <span class="layer-meta">
+              <span class="layer-name" data-i18n="lyr_comp">Artemis Suitability + Hillshade</span>
+              <span class="layer-sub" data-i18n="lyr_comp_sub">Live HLS landing zones &amp; PSR cold traps</span>
+            </span>
+            <span class="layer-unit">LIVE</span>
+          </button>
+          <button class="layer-btn" data-layer="elevation">
+            <span class="layer-key">2</span>
+            <span class="layer-meta">
+              <span class="layer-name" data-i18n="lyr_elev">LOLA Laser Altimetry DEM</span>
+              <span class="layer-sub" data-i18n="lyr_elev_sub">80m native polar stereographic elevation</span>
+            </span>
+            <span class="layer-unit">m</span>
+          </button>
+          <button class="layer-btn" data-layer="solar">
+            <span class="layer-key">3</span>
+            <span class="layer-meta">
+              <span class="layer-name" data-i18n="lyr_sun">Solar Power Continuity</span>
+              <span class="layer-sub" data-i18n="lyr_sun_sub">Mazarico 18.6-yr nutation visibility</span>
+            </span>
+            <span class="layer-unit">%</span>
+          </button>
+          <button class="layer-btn" data-layer="thermal">
+            <span class="layer-key">4</span>
+            <span class="layer-meta">
+              <span class="layer-name" data-i18n="lyr_temp">Diviner Cryogenic Cold Traps</span>
+              <span class="layer-sub" data-i18n="lyr_temp_sub">Annual max &amp; winter surface temp</span>
+            </span>
+            <span class="layer-unit">K</span>
+          </button>
+          <button class="layer-btn" data-layer="ice">
+            <span class="layer-key">5</span>
+            <span class="layer-meta">
+              <span class="layer-name" data-i18n="lyr_ice">Water-Ice Permafrost Depth</span>
+              <span class="layer-sub" data-i18n="lyr_ice_sub">Diviner Level-5 sublimation stability</span>
+            </span>
+            <span class="layer-unit">0-2.5m</span>
+          </button>
+          <button class="layer-btn" data-layer="earth">
+            <span class="layer-key">6</span>
+            <span class="layer-meta">
+              <span class="layer-name" data-i18n="lyr_earth">Direct-to-Earth (DTE) Comms</span>
+              <span class="layer-sub" data-i18n="lyr_earth_sub">Near-side link vs. Far-side quiet zone</span>
+            </span>
+            <span class="layer-unit">%</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. Dynamic Lunar Horizon Sun Simulator -->
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="section-title"><i class="fa-solid fa-sun"></i> <span data-i18n="sec_sun">360° Polar Horizon Sun (1.54° Tilt)</span></span>
+          <span class="slider-val" id="sun-az-val">135° E</span>
+        </div>
+        <div class="sun-row">
+          <button class="play-btn" id="btn-play-sun">
+            <i class="fa-solid fa-play" id="icon-play-sun"></i>
+            <span data-i18n="btn_lunar_day">Lunar Day</span>
+          </button>
+          <input type="range" id="slider-sun-az" min="0" max="359" value="135" aria-label="Solar Azimuth Degrees" />
+        </div>
+      </section>
+
+      <!-- 3. Artemis HLS Mission Constraint Solver -->
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="section-title"><i class="fa-solid fa-sliders"></i> <span data-i18n="sec_solver">Artemis HLS Mission Solver</span></span>
+        </div>
+
+        <div class="preset-grid" id="preset-grid">
+          <button class="preset-btn active" data-preset="artemis-dte" data-i18n="pre_dte">Artemis III (DTE)</button>
+          <button class="preset-btn" data-preset="gateway-nrho" data-i18n="pre_nrho">Gateway NRHO Relay</button>
+          <button class="preset-btn" data-preset="isru-ice" data-i18n="pre_isru">ISRU Ice Outpost</button>
+          <button class="preset-btn" data-preset="farside-radio" data-i18n="pre_radio">Far-Side Radio Array</button>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <span class="slider-label" data-i18n="sl_sun">Min Solar Illumination</span>
+            <span class="slider-val" id="val-min-sun">&ge; 65%</span>
+          </div>
+          <input type="range" id="sl-min-sun" min="0" max="85" step="1" value="65" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <span class="slider-label" data-i18n="sl_slope">Max Lander Slope (80m)</span>
+            <span class="slider-val" id="val-max-slope">&le; 10.0°</span>
+          </div>
+          <input type="range" id="sl-max-slope" min="3" max="25" step="0.5" value="10" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <span class="slider-label" data-i18n="sl_psr">Max Rover Sortie to PSR</span>
+            <span class="slider-val" id="val-max-psr">&le; 5.0 km</span>
+          </div>
+          <input type="range" id="sl-max-psr" min="0.5" max="25" step="0.5" value="5" />
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label-row">
+            <span class="slider-label" id="lbl-earth-mode" data-i18n="sl_earth">Min Direct-to-Earth Vis</span>
+            <span class="slider-val" id="val-earth">&ge; 35%</span>
+          </div>
+          <input type="range" id="sl-earth" min="0" max="85" step="1" value="35" />
+        </div>
+      </section>
+
+      <!-- 4. Cartographic Overlays -->
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="section-title"><i class="fa-solid fa-draw-polygon"></i> <span data-i18n="sec_overlays">Cartographic Overlays</span></span>
+        </div>
+        <div class="toggle-row">
+          <button class="chip-toggle active" data-ov="graticule" data-i18n="ov_grat">Polar Graticule</button>
+          <button class="chip-toggle active" data-ov="craters" data-i18n="ov_iau">IAU Craters</button>
+          <button class="chip-toggle active" data-ov="candidates" data-i18n="ov_cands">Base Candidates</button>
+          <button class="chip-toggle active" data-ov="transect" data-i18n="ov_prof">Rover Profile</button>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- Center Polar Stereographic Stage -->
+    <section class="map-stage" aria-label="Polar Stereographic Map Viewport">
+      <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner-ring"></div>
+        <div style="font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);" data-i18n="loading_msg">
+          Decoding NASA LRO LOLA &amp; Diviner Polar Grids...
+        </div>
+      </div>
+
+      <div class="canvas-grid dual-mode" id="canvas-grid">
+        <!-- North Pole Viewport -->
+        <div class="pole-viewport" id="vp-north" data-pole="north">
+          <canvas class="pole-canvas" id="cv-north"></canvas>
+          <canvas class="overlay-canvas" id="ov-north"></canvas>
+          <div class="pole-badge north">
+            <div class="pole-badge-kicker">IAU:2015:30110 | MOON2000 NORTH</div>
+            <div class="pole-badge-title" data-i18n="badge_north">Lunar Arctic (80°N - 90°N)</div>
+            <div class="pole-badge-metric" id="badge-metric-north">Viable Zone: -- km²</div>
+          </div>
+        </div>
+
+        <!-- South Pole Viewport -->
+        <div class="pole-viewport" id="vp-south" data-pole="south">
+          <canvas class="pole-canvas" id="cv-south"></canvas>
+          <canvas class="overlay-canvas" id="ov-south"></canvas>
+          <div class="pole-badge south">
+            <div class="pole-badge-kicker">IAU:2015:30120 | ARTEMIS III TARGET</div>
+            <div class="pole-badge-title" data-i18n="badge_south">Lunar South Pole (80°S - 90°S)</div>
+            <div class="pole-badge-metric" id="badge-metric-south">Viable Zone: -- km²</div>
+          </div>
+        </div>
+
+        <!-- Dynamic Colorbar Legend anchored cleanly inside Canvas Grid above Transect Drawer -->
+        <div class="legend-bar" id="legend-bar">
+          <div class="legend-title" id="legend-title">ARTEMIS HLS SUITABILITY + LOLA RELIEF</div>
+          <div class="legend-gradient" id="legend-gradient"></div>
+          <div class="legend-ticks" id="legend-ticks">
+            <span>PSR Cold Trap</span>
+            <span>Terrain Relief</span>
+            <span>Viable HLS Pad</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stage Floating Tools -->
+      <div class="stage-controls">
+        <button class="tool-btn" id="btn-zoom-in" title="Zoom In (+)"><i class="fa-solid fa-plus"></i></button>
+        <button class="tool-btn" id="btn-zoom-out" title="Zoom Out (-)"><i class="fa-solid fa-minus"></i></button>
+        <button class="tool-btn" id="btn-reset-view" title="Reset Polar Extent"><i class="fa-solid fa-expand"></i></button>
+        <button class="tool-btn" id="btn-draw-transect" title="Draw Custom 2-Point Rover Transect"><i class="fa-solid fa-route"></i></button>
+        <button class="tool-btn active" id="btn-toggle-drawer" title="Toggle Elevation & Thermal Cross-Section"><i class="fa-solid fa-chart-area"></i></button>
+      </div>
+
+      <!-- Bottom Rover Cross-Section Profile Drawer -->
+      <div class="transect-drawer" id="transect-drawer">
+        <div class="transect-header">
+          <span class="section-title"><i class="fa-solid fa-chart-line"></i> <span id="transect-title">ROVER TRANSECT PROFILE</span></span>
+          <div class="transect-presets" id="transect-presets"></div>
+        </div>
+        <svg class="transect-svg" id="transect-svg" viewBox="0 0 760 126" preserveAspectRatio="none"></svg>
+      </div>
+    </section>
+
+    <!-- Right Telemetry & Candidate Sites Sidebar -->
+    <aside class="sidebar-right" aria-label="Polar Trade-Study Telemetry and Base Camp Candidates">
+
+      <!-- 1. Head-to-Head Polar Trade Study -->
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="section-title"><i class="fa-solid fa-scale-balanced"></i> <span data-i18n="sec_trade">Arctic vs. South Pole Telemetry</span></span>
+        </div>
+
+        <div class="vs-row">
+          <div class="vs-head">
+            <span style="color: var(--accent-cyan);" id="vs-n-viable">Arctic: -- km²</span>
+            <span style="color: var(--text-muted);" data-i18n="vs_viable_lbl">Viable HLS Area</span>
+            <span style="color: var(--accent-amber);" id="vs-s-viable">South: -- km²</span>
+          </div>
+          <div class="vs-bar-track">
+            <div class="vs-bar-north" id="vs-bar-viable" style="width: 35%;"></div>
+          </div>
+        </div>
+
+        <div class="vs-row">
+          <div class="vs-head">
+            <span style="color: var(--accent-cyan);" id="vs-n-psr">Arctic: -- km²</span>
+            <span style="color: var(--text-muted);" data-i18n="vs_psr_lbl">PSR Cold Traps</span>
+            <span style="color: var(--accent-amber);" id="vs-s-psr">South: -- km²</span>
+          </div>
+          <div class="vs-bar-track">
+            <div class="vs-bar-north" id="vs-bar-psr" style="width: 32%;"></div>
+          </div>
+        </div>
+
+        <div class="compare-cards">
+          <div class="kpi-card">
+            <span class="kpi-label" data-i18n="kpi_coldest">Coldest Spot (Arctic)</span>
+            <span class="kpi-val cyan" id="kpi-hermite-k">26.0 K</span>
+            <span class="kpi-sub" id="kpi-hermite-sub">Hermite Crater (-247°C)</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label" data-i18n="kpi_peak_sun">Arctic Peak Sun (60m)</span>
+            <span class="kpi-val amber" id="kpi-peak-sun">89.0%</span>
+            <span class="kpi-sub" data-i18n="kpi_peary_sub">Peary / Whipple Crest</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label" data-i18n="kpi_surf_ice">Arctic Surface Frost</span>
+            <span class="kpi-val emerald" id="kpi-surf-ice">-- km²</span>
+            <span class="kpi-sub" data-i18n="kpi_surf_sub">Diviner 0.0m H2O Stable</span>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-label" data-i18n="kpi_spa">South Relief Advantage</span>
+            <span class="kpi-val amber" id="kpi-relief">-- km</span>
+            <span class="kpi-sub" data-i18n="kpi_spa_sub">SPA Basin Rim Uplift</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Live Orbital Pixel Inspector -->
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="section-title"><i class="fa-solid fa-crosshairs"></i> <span data-i18n="sec_probe">Orbital Pixel Telemetry</span></span>
+          <span class="layer-unit" id="probe-pole-tag">ARCTIC</span>
+        </div>
+        <div class="probe-grid">
+          <div class="probe-item"><span class="probe-k">Lat / Lon</span><span class="probe-v" id="pr-latlon">88.63°N, 24.4°E</span></div>
+          <div class="probe-item"><span class="probe-k">LOLA Elev</span><span class="probe-v" id="pr-elev">+1,840 m</span></div>
+          <div class="probe-item"><span class="probe-k">80m Slope</span><span class="probe-v" id="pr-slope">6.5°</span></div>
+          <div class="probe-item"><span class="probe-k">Solar Vis</span><span class="probe-v" id="pr-sun">84.5%</span></div>
+          <div class="probe-item"><span class="probe-k">Earth DTE</span><span class="probe-v" id="pr-earth">48.0%</span></div>
+          <div class="probe-item"><span class="probe-k">Max / Win T</span><span class="probe-v" id="pr-temp">112 / 64 K</span></div>
+          <div class="probe-item"><span class="probe-k">H2O Depth</span><span class="probe-v" id="pr-ice">&gt; 2.5 m</span></div>
+          <div class="probe-item"><span class="probe-k">PSR Dist</span><span class="probe-v" id="pr-psr">1.8 km</span></div>
+        </div>
+      </section>
+
+      <!-- 3. Ranked Base Camp Candidates -->
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="section-title"><i class="fa-solid fa-location-dot"></i> <span id="cand-header-lbl" data-i18n="sec_cands">Top Artemis North Candidates</span></span>
+          <div class="lang-toggle">
+            <button class="lang-btn active" id="cand-tab-north">80°N</button>
+            <button class="lang-btn" id="cand-tab-south">80°S</button>
+          </div>
+        </div>
+        <div class="candidate-list" id="candidate-list"></div>
+      </section>
+
+      <!-- 4. Ground-Truth Scientific Provenance -->
+      <section class="panel-section">
+        <div class="section-header">
+          <span class="section-title"><i class="fa-solid fa-database"></i> <span data-i18n="sec_sources">Empirical NASA PDS Sources</span></span>
+        </div>
+        <p class="citation-note" data-i18n="sources_copy">
+          100% real orbital measurements: LOLA 80m Polar DEM (<a href="https://imbrium.mit.edu/DATA/LOLA_GDR/POLAR/IMG/" target="_blank" rel="noopener">Smith et al., 2010</a>), 60m/120m Polar Illumination &amp; PSRs (<a href="https://pgda.gsfc.nasa.gov/products/69" target="_blank" rel="noopener">Mazarico et al., 2011</a>), Diviner Level-5 Polar Resource Products (<a href="https://pds-geosciences.wustl.edu/missions/lro/diviner.htm" target="_blank" rel="noopener">Paige et al., 2010</a>), and official <a href="https://planetarynames.wr.usgs.gov/" target="_blank" rel="noopener">IAU / USGS</a> nomenclature. Built by <a href="https://sounny.com" target="_blank" rel="noopener">Dr. Anwar Sounny-Slitine</a>.
+        </p>
+      </section>
+
+    </aside>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
