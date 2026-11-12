@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lunar Arctic · 80°N-90°N Orbital Atlas</title>
-  <meta name="description" content="Real-time WebGL2 raymarched atlas of the Lunar Arctic (80°N-90°N) built from NASA LRO LOLA laser altimetry (296.9 m/px), GSFC PGDA polar solar illumination, and Diviner 24.7 K cryogenic observations." />
+  <title>Lunar Polar Atlas · North (80°N-90°N) &amp; South (80°S-90°S) · NASA LRO</title>
+  <meta name="description" content="Real-time WebGL2 raymarched dual-pole atlas of the Moon's North (80°N-90°N) and South (80°S-90°S) Poles built from NASA LRO LOLA laser altimetry (296.9 m/px), GSFC PGDA polar illumination, and Diviner cryogenic observations." />
   <link rel="canonical" href="https://sounny.github.io/lunarmap/" />
 
   <!-- Open Graph & Twitter -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Lunar Arctic (80°N-90°N) · Real-Time NASA LRO Orbital Atlas" />
-  <meta property="og:description" content="Sweep the grazing +1.54° summer polar sun across Whipple's 89.8% sunlit rim, 24.7 K (-248°C) cold traps, and polar outpost landing ridges." />
-  <meta property="og:url" content="https://sounny.github.io/lunarmap/" />
+  <meta property="og:title" content="Lunar Polar Atlas · North &amp; South Poles · Real-Time NASA LRO WebGL2" />
+  <meta property="og:description" content="Explore both the Lunar North Pole (80°N-90°N) and South Pole (80°S-90°S) with real-time 3D horizon raymarching across LOLA topography, sunlit crests, and cryogenic cold traps." />
+  <meta property="og:url" href="https://sounny.github.io/lunarmap/" />
   <meta property="og:image" content="https://sounny.github.io/lunarmap/og-card.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Lunar Arctic (80°N-90°N) · Real-Time NASA LRO Orbital Atlas" />
-  <meta name="twitter:description" content="Interactive WebGL2 raymarched topography of the Moon's North Pole powered by empirical NASA LRO LOLA, PGDA, and Diviner datasets." />
+  <meta name="twitter:title" content="Lunar Polar Atlas · North &amp; South Poles · Real-Time NASA LRO WebGL2" />
+  <meta name="twitter:description" content="Interactive WebGL2 raymarched topography of the Moon's North and South Poles powered by empirical NASA LRO LOLA, PGDA, and Diviner datasets." />
   <meta name="twitter:image" content="https://sounny.github.io/lunarmap/og-card.png" />
 
   <!-- Typography -->
@@ -32,16 +32,18 @@
       {
         "@type": "WebApplication",
         "@id": "https://sounny.github.io/lunarmap/#app",
-        "name": "Lunar Arctic (80°N-90°N) Orbital Atlas",
+        "name": "Lunar Polar Atlas (North 80°N-90°N & South 80°S-90°S)",
         "url": "https://sounny.github.io/lunarmap/",
         "applicationCategory": "ScientificApplication",
         "operatingSystem": "Web Browser",
         "author": { "@id": "https://sounny.com/#person" },
         "about": {
           "@type": "Dataset",
-          "name": "NASA LRO LOLA North Polar DEM (296.9 m/px from LDEM_80N_80M), GSFC PGDA Product #69 Polar Illumination, and Diviner Level-5 Polar Resource Products V2.0 (80°N-90°N)",
+          "name": "NASA LRO LOLA North & South Polar DEMs (296.9 m/px from LDEM_80N_80M & LDEM_80S_80M), GSFC PGDA Product #69 Polar Illumination, and Diviner Level-5 Polar Resource Products V2.0",
           "citation": [
             "Smith et al. (2010), Geophys. Res. Lett. 37, L18204",
+            "Paige et al. (2010), Science 330(6003), 479-482",
+            "Colaprete et al. (2010), Science 330(6003), 463-468",
             "Mazarico et al. (2011), Icarus 211(2), 1066-1081; NASA GSFC PGDA Product #69 (2016)",
             "Paige, Sullivan & Williams (2018), LRO-L-DLRE-5-PRP-V2.0, NASA PDS (doi:10.17189/wj0s-w188)",
             "Williams et al. (2019), J. Geophys. Res.: Planets 124(10), 2505-2521"
@@ -72,7 +74,7 @@
   </script>
 </head>
 <body>
-  <h1 class="sr-only">Lunar Arctic (80°N-90°N): Real-Time NASA LRO Raymarched Orbital Atlas</h1>
+  <h1 class="sr-only">Lunar Polar Atlas (North 80°N-90°N &amp; South 80°S-90°S): Real-Time NASA LRO Raymarched Orbital Atlas</h1>
 
   <!-- Deep Space Starlight Backdrop -->
   <canvas id="starfield" aria-hidden="true"></canvas>
@@ -80,13 +82,17 @@
   <!-- Asymmetric Desktop Studio Grid / Responsive Mobile Stage -->
   <main class="cosmos" id="cosmos">
 
-    <!-- Mobile-Only Compact Top Bar (Preserves Great Mobile Layout) -->
+    <!-- Mobile-Only Compact Top Bar -->
     <header class="mobile-topbar">
       <div>
-        <div class="m-eyebrow" data-i18n="eyebrow">NASA LRO · 80°N - 90°N</div>
-        <div class="m-title" data-i18n="title">LUNAR ARCTIC</div>
+        <div class="m-eyebrow" id="m-eyebrow">NASA LRO · 80°N - 90°N</div>
+        <div class="m-title" id="m-title">LUNAR NORTH POLE</div>
       </div>
       <div class="m-actions">
+        <div class="lang-capsule pole-mini-capsule" role="group" aria-label="Lunar Hemisphere">
+          <button class="pole-btn active" data-pole="north" type="button">80°N</button>
+          <button class="pole-btn" data-pole="south" type="button">80°S</button>
+        </div>
         <div class="lang-capsule" role="group" aria-label="Language">
           <button class="lang-btn active" data-lang="en" type="button">EN</button>
           <button class="lang-btn" data-lang="fr" type="button">FR</button>
@@ -100,23 +106,28 @@
     </header>
 
     <!-- LEFT ZONE (Desktop): Unified VisionOS Smoked-Glass Command Monolith -->
-    <aside class="studio-rail" id="studio-rail" aria-label="Lunar Arctic Mission Controls and Telemetry">
+    <aside class="studio-rail" id="studio-rail" aria-label="Lunar Polar Atlas Controls and Telemetry">
 
-      <!-- 1. Masthead & Polar Benchmark Strip -->
+      <!-- 1. Masthead, Dual-Pole Switcher & Empirical Benchmark Strip -->
       <section class="rail-section rail-header">
+        <div class="pole-switch" role="tablist" aria-label="Lunar Hemisphere">
+          <button class="pole-btn active" data-pole="north" type="button" data-i18n="pole_north">North Pole · 80°N</button>
+          <button class="pole-btn" data-pole="south" type="button" data-i18n="pole_south">South Pole · 80°S</button>
+        </div>
+
         <div class="eyebrow-row">
-          <span class="eyebrow" data-i18n="eyebrow">NASA LRO · 80°N - 90°N</span>
+          <span class="eyebrow" id="rail-eyebrow">NASA LRO · 80°N - 90°N</span>
           <span class="live-chip"><span class="live-dot"></span>297M DEM</span>
         </div>
-        <div class="title" data-i18n="title">LUNAR ARCTIC</div>
-        <p class="subtitle" data-i18n="subtitle">
-          Sweep the grazing +1.54° summer polar sun across sunlit crater rims, 24.7 K cold traps, and polar outpost landing ridges.
+        <div class="title" id="rail-title">LUNAR NORTH POLE</div>
+        <p class="subtitle" id="rail-subtitle">
+          Sweep the grazing +1.54° summer polar sun across sunlit crater rims, permanent shadows, and 24.7 K cold traps.
         </p>
 
-        <div class="kpi-strip" aria-label="Lunar Arctic Empirical Benchmarks">
+        <div class="kpi-strip" aria-label="Lunar Polar Empirical Benchmarks">
           <div class="kpi-cell">
             <span class="kpi-val" id="stat-cold">--</span>
-            <span class="kpi-lbl" id="stat-cold-lbl" data-i18n="fact_cold">-248°C Min</span>
+            <span class="kpi-lbl" id="stat-cold-lbl">-248°C Min</span>
           </div>
           <div class="kpi-cell">
             <span class="kpi-val" id="stat-sun">--</span>
@@ -129,29 +140,25 @@
         </div>
       </section>
 
-      <!-- 2. Orbital Scientific Lenses & Synchronized Polar Sun Control -->
+      <!-- 2. Three Empirical Orbital Lenses & Synchronized Polar Sun Control -->
       <section class="rail-section rail-controls">
         <div class="sec-head">
           <span class="sec-title" data-i18n="sec_lenses">ORBITAL LENS</span>
           <span class="sec-hint" data-i18n="sec_webgl">REAL-TIME GPU</span>
         </div>
 
-        <div class="lens-grid" role="toolbar" aria-label="Lunar Arctic Scientific Lenses">
+        <div class="lens-grid" role="toolbar" aria-label="Lunar Polar Scientific Lenses">
           <button class="lens-btn active" data-mode="shadow" type="button">
             <span class="lens-dot dot-shadow"></span>
             <span data-i18n="mode_shadow">Sunlight</span>
           </button>
           <button class="lens-btn" data-mode="light" type="button">
             <span class="lens-dot dot-light"></span>
-            <span data-i18n="mode_light">Peak Sunlight</span>
+            <span data-i18n="mode_light">Peak Sun</span>
           </button>
           <button class="lens-btn" data-mode="cold" type="button">
             <span class="lens-dot dot-cold"></span>
-            <span data-i18n="mode_cold">24 K Ice Traps</span>
-          </button>
-          <button class="lens-btn" data-mode="outpost" type="button">
-            <span class="lens-dot dot-outpost"></span>
-            <span data-i18n="mode_outpost">Outpost Sites</span>
+            <span data-i18n="mode_cold">Ice Traps</span>
           </button>
         </div>
 
@@ -163,36 +170,18 @@
           </button>
           <div class="sun-slider-col">
             <div class="sun-slider-top">
-              <span data-i18n="sun_horizon">+1.54° Summer Horizon Sun</span>
+              <span id="sun-horizon-lbl">+1.54° Summer Horizon Sun</span>
               <strong id="panel-sun-az">132°E</strong>
             </div>
             <input type="range" id="rng-azimuth" min="-180" max="180" step="1" value="132" aria-label="Solar Azimuth Longitude" />
           </div>
         </div>
-
-        <!-- Inline Expandable Outpost Criteria Tuner -->
-        <div class="outpost-drawer collapsed" id="outpost-tuner">
-          <div class="tuner-row">
-            <span data-i18n="tune_sun">Min Solar</span>
-            <input type="range" id="rng-sun" min="45" max="85" step="1" value="60" />
-            <strong id="val-sun">≥60%</strong>
-          </div>
-          <div class="tuner-row">
-            <span data-i18n="tune_slope">Max Slope</span>
-            <input type="range" id="rng-slope" min="4" max="15" step="0.5" value="10" />
-            <strong id="val-slope">≤10.0°</strong>
-          </div>
-          <div class="tuner-summary">
-            <span data-i18n="viable_lbl">Viable Ridge Area (≤5 km to PSR)</span>
-            <strong id="val-viable">--</strong>
-          </div>
-        </div>
       </section>
 
-      <!-- 3. Curated 5-Stop Arctic Landmark Explorer -->
+      <!-- 3. Curated 5-Stop Polar Landmark Explorer -->
       <section class="rail-section rail-story" id="story-card" aria-live="polite">
         <div class="story-nav">
-          <div class="lm-tabs" id="lm-tabs" role="tablist" aria-label="Lunar Arctic Landmarks">
+          <div class="lm-tabs" id="lm-tabs" role="tablist" aria-label="Lunar Polar Landmarks">
             <button class="lm-tab active" data-idx="0" type="button">01</button>
             <button class="lm-tab" data-idx="1" type="button">02</button>
             <button class="lm-tab" data-idx="2" type="button">03</button>
@@ -254,8 +243,8 @@
       </footer>
     </aside>
 
-    <!-- RIGHT ZONE: Unobstructed Sculptural Lunar Arctic Stage -->
-    <section class="lunar-viewport" aria-label="Interactive Lunar Arctic 80°N to 90°N Globe">
+    <!-- RIGHT ZONE: Unobstructed Sculptural Lunar Polar Stage -->
+    <section class="lunar-viewport" aria-label="Interactive Lunar Polar Globe">
 
       <!-- Desktop Top-Right Ghost Utility Bar -->
       <nav class="utility-bar" aria-label="Controls and Links">
@@ -284,8 +273,8 @@
           </defs>
           <g id="dial-ticks"></g>
           <circle class="dial-track" cx="0" cy="0" r="354" />
-          <text class="dial-cardinal" x="0" y="-368" text-anchor="middle" data-i18n="far_side">180° FAR SIDE</text>
-          <text class="dial-cardinal" x="0" y="378" text-anchor="middle" data-i18n="near_side">0° EARTH</text>
+          <text class="dial-cardinal" id="cardinal-top" x="0" y="-368" text-anchor="middle">180° FAR SIDE</text>
+          <text class="dial-cardinal" id="cardinal-bottom" x="0" y="378" text-anchor="middle">0° EARTH</text>
           <text class="dial-cardinal" x="-374" y="4" text-anchor="end">90°W</text>
           <text class="dial-cardinal" x="374" y="4" text-anchor="start">90°E</text>
 
@@ -310,11 +299,11 @@
           <span class="scale-label" id="scale-label">100 KM</span>
           <div class="scale-line" id="scale-line"></div>
         </div>
-        <span class="crs-stamp">IAU_2015:30130 · SCROLL TO ZOOM</span>
+        <span class="crs-stamp" id="crs-stamp">IAU_2015:30130 · SCROLL TO ZOOM</span>
       </div>
     </section>
 
-    <!-- Mobile-Only Bottom Floating Mode Capsule (Preserves Great Mobile UX) -->
+    <!-- Mobile-Only Bottom Floating Mode Capsule -->
     <div class="mobile-dock" role="toolbar" aria-label="Mobile Lens Switcher">
       <button class="orbit-play-btn" id="btn-play-sun-mobile" type="button" aria-label="Animate 360° Polar Sun">
         <svg class="icon-play" viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"/></svg>
@@ -325,13 +314,10 @@
         <span class="lens-dot dot-shadow"></span><span data-i18n="mode_shadow">Sunlight</span>
       </button>
       <button class="lens-btn" data-mode="light" type="button">
-        <span class="lens-dot dot-light"></span><span data-i18n="mode_light">Peak Sunlight</span>
+        <span class="lens-dot dot-light"></span><span data-i18n="mode_light">Peak Sun</span>
       </button>
       <button class="lens-btn" data-mode="cold" type="button">
-        <span class="lens-dot dot-cold"></span><span data-i18n="mode_cold">24 K Ice Traps</span>
-      </button>
-      <button class="lens-btn" data-mode="outpost" type="button">
-        <span class="lens-dot dot-outpost"></span><span data-i18n="mode_outpost">Outpost Sites</span>
+        <span class="lens-dot dot-cold"></span><span data-i18n="mode_cold">Ice Traps</span>
       </button>
     </div>
 

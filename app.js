@@ -3,18 +3,12 @@
 
   const I18N = {
     en: {
-      eyebrow: 'NASA LRO · 80°N - 90°N',
-      title: 'LUNAR ARCTIC',
-      subtitle: 'Sweep the grazing +1.54° summer polar sun across sunlit crater rims, 24.7 K cold traps, and polar outpost landing ridges.',
-      fact_cold: '-248°C Min',
+      pole_north: 'North Pole · 80°N',
+      pole_south: 'South Pole · 80°S',
       fact_sun: 'Peak Sun',
       fact_psr: 'Perm. Shadow',
       sec_lenses: 'ORBITAL LENS',
       sec_webgl: 'REAL-TIME GPU',
-      sun_horizon: '+1.54° Summer Horizon Sun',
-      tune_sun: 'Min Solar',
-      tune_slope: 'Max Slope',
-      viable_lbl: 'Viable Ridge Area (≤5 km to PSR)',
       probe_lbl: 'SURFACE PROBE',
       reset_view: 'Reset Orbit',
       far_side: '180° FAR SIDE',
@@ -23,24 +17,32 @@
       lbl_sun: 'SOLAR 18.6Y',
       lbl_temp: 'DIVINER AVG',
       mode_shadow: 'Sunlight',
-      mode_light: 'Peak Sunlight',
-      mode_cold: '24 K Ice Traps',
-      mode_outpost: 'Outpost Sites',
+      mode_light: 'Peak Sun',
+      mode_cold: 'Ice Traps',
+      scroll_zoom: 'SCROLL TO ZOOM',
       loading: 'LOADING NASA LRO POLAR TOPOGRAPHY',
+      poles: {
+        north: {
+          eyebrow: 'NASA LRO · 80°N - 90°N',
+          title: 'LUNAR NORTH POLE',
+          subtitle: 'Sweep the grazing +1.54° summer polar sun across sunlit crater rims, permanent shadows, and 24.7 K cold traps.',
+          sun_horizon: '+1.54° Summer Horizon Sun',
+        },
+        south: {
+          eyebrow: 'NASA LRO · 80°S - 90°S',
+          title: 'LUNAR SOUTH POLE',
+          subtitle: 'Sweep the grazing -1.54° summer polar sun across Shackleton\'s rim, Mons Malapert, and 25.5 K cold traps.',
+          sun_horizon: '-1.54° Summer Horizon Sun',
+        },
+      },
     },
     fr: {
-      eyebrow: 'NASA LRO · 80°N - 90°N',
-      title: 'ARCTIQUE LUNAIRE',
-      subtitle: 'Faites glisser le Soleil polaire rasant (+1,54°) sur les crêtes éclairées, les pièges à 24,7 K et les sites d\'avant-poste.',
-      fact_cold: 'Min -248 °C',
+      pole_north: 'Pôle Nord · 80°N',
+      pole_south: 'Pôle Sud · 80°S',
       fact_sun: 'Pic Solaire',
       fact_psr: 'Ombre Perm.',
       sec_lenses: 'FILTRE ORBITAL',
       sec_webgl: 'GPU TEMPS RÉEL',
-      sun_horizon: 'Soleil Rasant d\'Été +1,54°',
-      tune_sun: 'Soleil Min',
-      tune_slope: 'Pente Max',
-      viable_lbl: 'Zone Viable (≤5 km PSR)',
       probe_lbl: 'SONDE DE SURFACE',
       reset_view: 'Réinitialiser',
       far_side: '180° FACE CACHÉE',
@@ -49,11 +51,25 @@
       lbl_sun: 'SOLEIL 18,6A',
       lbl_temp: 'MOY. DIVINER',
       mode_shadow: 'Lumière',
-      mode_light: 'Soleil Polaire',
-      mode_cold: 'Glace 24 K',
-      mode_outpost: 'Avant-Postes',
+      mode_light: 'Pic Solaire',
+      mode_cold: 'Pièges Glace',
+      scroll_zoom: 'ZOOM MOLETTE',
       loading: 'CHARGEMENT TOPOGRAPHIE POLAIRE NASA LRO',
-    }
+      poles: {
+        north: {
+          eyebrow: 'NASA LRO · 80°N - 90°N',
+          title: 'PÔLE NORD LUNAIRE',
+          subtitle: 'Faites glisser le Soleil polaire rasant (+1,54°) sur les crêtes éclairées, les ombres permanentes et les pièges à 24,7 K.',
+          sun_horizon: 'Soleil Rasant d\'Été +1,54°',
+        },
+        south: {
+          eyebrow: 'NASA LRO · 80°S - 90°S',
+          title: 'PÔLE SUD LUNAIRE',
+          subtitle: 'Faites glisser le Soleil polaire rasant (-1,54°) sur le rempart de Shackleton, Mons Malapert et les pièges à 25,5 K.',
+          sun_horizon: 'Soleil Rasant d\'Été -1,54°',
+        },
+      },
+    },
   };
 
   const VERT_SRC = `#version 300 es
@@ -70,18 +86,17 @@
   uniform vec2 u_resolution;
   uniform float u_zoom;
   uniform vec2 u_pan;
+  uniform float u_hemi;       // +1.0 for North (IAU_2015:30130), -1.0 for South (IAU_2015:30135)
+  uniform float u_elevOffset; // -5500.0 North, -7500.0 South
+  uniform float u_elevSpan;   //  8500.0 North, 15000.0 South
   uniform float u_sunLonRad;
   uniform float u_subLatRad;
-  uniform vec4 u_modeWeights; // x: shadow, y: peak sunlight, z: cold traps, w: outpost sites
-  uniform float u_minSunPct;
-  uniform float u_maxSlopeDeg;
+  uniform vec3 u_modeWeights; // x: shadow, y: peak sunlight, z: cryogenic cold traps
 
   out vec4 fragColor;
 
   const float R_MOON = 1737400.0;
   const float HALF_EXTENT = 304000.0;
-  const float ELEV_OFFSET = -5500.0;
-  const float ELEV_SPAN = 8500.0;
   const float RES_2K = 608000.0 / 2048.0;
 
   // Single-tap 16-bit elevation fetch for distant shadow raymarching
@@ -89,7 +104,7 @@
     ivec2 ts = textureSize(u_demTex, 0);
     ivec2 ic = clamp(ivec2(uv * vec2(ts)), ivec2(0), ts - 1);
     vec4 t = texelFetch(u_demTex, ic, 0);
-    return ((t.r * 255.0 * 256.0 + t.g * 255.0) / 65535.0) * ELEV_SPAN + ELEV_OFFSET;
+    return ((t.r * 255.0 * 256.0 + t.g * 255.0) / 65535.0) * u_elevSpan + u_elevOffset;
   }
 
   // Exact 16-bit bilinear elevation fetch (zero RG wrap artifacts)
@@ -105,14 +120,15 @@
     vec4 t01 = texelFetch(u_demTex, ivec2(i0.x, i1.y), 0);
     vec4 t11 = texelFetch(u_demTex, i1, 0);
 
-    float h00 = ((t00.r * 255.0 * 256.0 + t00.g * 255.0) / 65535.0) * ELEV_SPAN + ELEV_OFFSET;
-    float h10 = ((t10.r * 255.0 * 256.0 + t10.g * 255.0) / 65535.0) * ELEV_SPAN + ELEV_OFFSET;
-    float h01 = ((t01.r * 255.0 * 256.0 + t01.g * 255.0) / 65535.0) * ELEV_SPAN + ELEV_OFFSET;
-    float h11 = ((t11.r * 255.0 * 256.0 + t11.g * 255.0) / 65535.0) * ELEV_SPAN + ELEV_OFFSET;
+    float h00 = ((t00.r * 255.0 * 256.0 + t00.g * 255.0) / 65535.0) * u_elevSpan + u_elevOffset;
+    float h10 = ((t10.r * 255.0 * 256.0 + t10.g * 255.0) / 65535.0) * u_elevSpan + u_elevOffset;
+    float h01 = ((t01.r * 255.0 * 256.0 + t01.g * 255.0) / 65535.0) * u_elevSpan + u_elevOffset;
+    float h11 = ((t11.r * 255.0 * 256.0 + t11.g * 255.0) / 65535.0) * u_elevSpan + u_elevOffset;
 
     return mix(mix(h00, h10, f.x), mix(h01, h11, f.x), f.y);
   }
 
+  // Right-handed local polar stereographic unit sphere (Z outward at pole in both hemispheres)
   vec3 moonUnitSphere(vec2 xy) {
     float rho2 = dot(xy, xy);
     float d = 4.0 * R_MOON * R_MOON + rho2;
@@ -121,20 +137,6 @@
       4.0 * R_MOON * xy.y / d,
       (4.0 * R_MOON * R_MOON - rho2) / d
     );
-  }
-
-  float evalOutpostViable(vec2 pUV) {
-    float sPct = texture(u_demTex, pUV).b * 100.0;
-    float dPsr = texture(u_sciTex, pUV).b * 25.5;
-    if (sPct < u_minSunPct - 0.5 || dPsr > 5.1) return 0.0;
-    float du = 1.0 / 2048.0;
-    float dzdx = (sampleElev(pUV + vec2(du, 0.0)) - sampleElev(pUV - vec2(du, 0.0))) / (2.0 * RES_2K);
-    float dzdy = (sampleElev(pUV - vec2(0.0, du)) - sampleElev(pUV + vec2(0.0, du))) / (2.0 * RES_2K);
-    float slDeg = degrees(atan(length(vec2(dzdx, dzdy))));
-    float sGate = smoothstep(u_minSunPct - 0.5, u_minSunPct + 0.5, sPct);
-    float slGate = 1.0 - smoothstep(u_maxSlopeDeg - 0.25, u_maxSlopeDeg + 0.25, slDeg);
-    float pGate = 1.0 - smoothstep(4.9, 5.1, dPsr);
-    return clamp(sGate * slGate * pGate, 0.0, 1.0);
   }
 
   void main() {
@@ -154,27 +156,26 @@
 
     float h0 = sampleElev(uv);
 
-    // Compute true unexaggerated (1.0x) local slope & 3D surface normal on Moon sphere
+    // True unexaggerated (1.0x) local slope & 3D surface normal on Moon sphere
     float du = 1.0 / 2048.0;
     float hR = sampleElev(uv + vec2(du, 0.0));
     float hL = sampleElev(uv - vec2(du, 0.0));
-    float hU = sampleElev(uv - vec2(0.0, du)); // +Y is smaller uv.y
+    float hU = sampleElev(uv - vec2(0.0, du));
     float hD = sampleElev(uv + vec2(0.0, du));
 
     float dzdx = (hR - hL) / (2.0 * RES_2K);
     float dzdy = (hU - hD) / (2.0 * RES_2K);
-    float slopeDeg = degrees(atan(length(vec2(dzdx, dzdy))));
 
     vec3 uSphere = moonUnitSphere(xy);
     vec3 east = normalize(vec3(1.0, 0.0, 0.0) - uSphere * uSphere.x);
     vec3 northY = normalize(cross(uSphere, east));
     vec3 surfNormal = normalize(uSphere - (dzdx * east + dzdy * northY));
 
-    // True 3D solar unit vector in Moon polar frame
+    // True 3D solar unit vector in hemisphere stereographic frame
     vec3 sunDir = normalize(vec3(
       cos(u_subLatRad) * sin(u_sunLonRad),
-      -cos(u_subLatRad) * cos(u_sunLonRad),
-      sin(u_subLatRad)
+      -u_hemi * cos(u_subLatRad) * cos(u_sunLonRad),
+      u_hemi * sin(u_subLatRad)
     ));
 
     // 40-step 3D Spherical Lunar Horizon Raymarching with 0.53° Solar Disc Penumbra
@@ -202,25 +203,27 @@
         float diff = (R_MOON + hStep) - rRay;
         float ang = diff / t;
         maxOcc = max(maxOcc, ang);
-        if (ang > 0.006) {
+        if (maxOcc > 0.0052) {
           shadow = 0.0;
           break;
         }
-        t = t * 1.14 + 210.0;
+        t *= 1.168;
       }
-      // Solar angular radius = 0.00465 rad (0.266 deg) -> physical penumbra
-      shadow = min(shadow, 1.0 - smoothstep(-0.00465, 0.00465, maxOcc));
+      if (shadow > 0.0) {
+        shadow = 1.0 - smoothstep(-0.00465, 0.00465, maxOcc);
+      }
     }
 
-    // Exact Lommel-Seeliger lunar regolith reflectance: mu0 / (mu0 + mu), normalized to 1 at zenith
-    float mu0 = max(0.0, dot(surfNormal, sunDir));
-    float mu = max(0.05, dot(surfNormal, vec3(0.0, 0.0, 1.0)));
+    // Exact Lommel-Seeliger lunar regolith photometric reflectance: 2 * mu0 / (mu0 + mu)
+    float mu0 = max(dot(surfNormal, sunDir), 0.0);
+    float mu = max(dot(surfNormal, uSphere), 0.12);
     float ls = (mu0 > 0.0) ? (2.0 * mu0 / (mu0 + mu)) : 0.0;
 
-    // Near-side-only Earthshine: Sub-Earth direction is -Y (xy.y < 0); zero Earthshine on Far Side (xy.y >= 0)
-    vec3 earthDir = vec3(0.0, -1.0, 0.0);
-    float earthVis = smoothstep(0.0, 0.05, -uSphere.y);
-    float earthInc = max(0.0, dot(surfNormal, earthDir));
+    // Physically bounded near-side-only Earthshine (-90° < lon < +90° <=> -u_hemi * xy.y > 0)
+    vec3 earthDir = normalize(vec3(0.0, -u_hemi, 0.095));
+    float nearSideMask = (-u_hemi * xy.y > 0.0) ? 1.0 : 0.0;
+    float earthVis = clamp(texture(u_sciTex, uv).a, 0.0, 1.0) * nearSideMask;
+    float earthInc = max(dot(surfNormal, earthDir), 0.0);
     vec3 earthshine = vec3(0.026, 0.035, 0.054) * earthVis * (0.25 + 0.75 * earthInc);
     vec3 starlightFloor = vec3(0.010, 0.013, 0.020);
 
@@ -233,7 +236,6 @@
     float solarPct = texture(u_demTex, uv).b * 100.0;
     vec4 sci = texture(u_sciTex, uv);
     float tempK = sci.r * 200.0 + 20.0;
-    float distPsrKm = sci.b * 25.5;
 
     // Integer texelFetch for exact surface-frost flag (g_ice == 0 iff ice_depth == 0.0 m)
     ivec2 icSci = clamp(ivec2(uv * vec2(textureSize(u_sciTex, 0))), ivec2(0), textureSize(u_sciTex, 0) - 1);
@@ -259,7 +261,7 @@
     vec3 lightBase = shadowScene * 0.28 + darkMoon * 0.42;
     vec3 lightScene = mix(lightBase, goldCol * (0.88 + 0.30 * sunHot), clamp(sunWarm * 1.18, 0.0, 1.0));
 
-    // Mode 3: 24 K Cryogenic Cold Traps & Surface Water Frost (Sapphire-Cyan Luminescence)
+    // Mode 3: Cryogenic Cold Traps & Surface Water Frost (Sapphire-Cyan Luminescence)
     float coldT = 1.0 - smoothstep(24.0, 110.0, tempK);
     float ultraCold = 1.0 - smoothstep(24.0, 48.0, tempK);
     float surfaceFrost = (iceExact < 0.5) ? 1.0 : 0.0;
@@ -271,42 +273,12 @@
     float coldMask = clamp(coldT * 1.15, 0.0, 1.0);
     vec3 coldScene = mix(shadowScene * 0.48 + darkMoon * 0.35, coldCol * 0.95, coldMask);
 
-    // Mode 4: Polar Outpost Landing Ridges (Synchronized with CPU criteria: >=minSunPct, <=maxSlopeDeg, <=5.0 km to PSR)
-    float sGate = smoothstep(u_minSunPct - 0.5, u_minSunPct + 0.5, solarPct);
-    float slGate = 1.0 - smoothstep(u_maxSlopeDeg - 0.25, u_maxSlopeDeg + 0.25, slopeDeg);
-    float pGate = 1.0 - smoothstep(4.9, 5.1, distPsrKm);
-    float viable = clamp(sGate * slGate * pGate, 0.0, 1.0);
-    float viableHalo = 0.0;
-    if (u_modeWeights.w > 0.001) {
-      float hs = (2.0 / 1024.0) / max(u_zoom, 1.0);
-      float hd = hs * 0.7071;
-      float nMax1 = max(
-        max(evalOutpostViable(uv + vec2(hs * 0.5, 0.0)), evalOutpostViable(uv - vec2(hs * 0.5, 0.0))),
-        max(evalOutpostViable(uv + vec2(0.0, hs * 0.5)), evalOutpostViable(uv - vec2(0.0, hs * 0.5)))
-      );
-      float nMax2 = max(
-        max(evalOutpostViable(uv + vec2(hs, 0.0)), evalOutpostViable(uv - vec2(hs, 0.0))),
-        max(evalOutpostViable(uv + vec2(0.0, hs)), evalOutpostViable(uv - vec2(0.0, hs)))
-      );
-      float nDiag = max(
-        max(evalOutpostViable(uv + vec2(hd, hd)), evalOutpostViable(uv - vec2(hd, hd))),
-        max(evalOutpostViable(uv + vec2(hd, -hd)), evalOutpostViable(uv - vec2(hd, -hd)))
-      );
-      viableHalo = max(nMax1 * 0.88, max(nMax2, nDiag) * 0.55);
-    }
-    float viableVis = max(viable, viableHalo);
-    float psrContext = (distPsrKm < 0.25) ? 0.38 : 0.0;
-    vec3 outpostBase = mix(shadowScene * 0.32 + darkMoon * 0.38, vec3(0.06, 0.34, 0.56), psrContext);
-    vec3 emeraldCol = mix(vec3(0.08, 0.90, 0.62), vec3(0.88, 1.0, 0.94), max(viable, smoothstep(u_minSunPct, 86.0, solarPct)));
-    vec3 outpostScene = mix(outpostBase, emeraldCol, viableVis);
-
     // Smoothly blend active lens
-    vec3 col = shadowScene  * u_modeWeights.x
-             + lightScene   * u_modeWeights.y
-             + coldScene    * u_modeWeights.z
-             + outpostScene * u_modeWeights.w;
+    vec3 col = shadowScene * u_modeWeights.x
+             + lightScene  * u_modeWeights.y
+             + coldScene   * u_modeWeights.z;
 
-    // Subtle spherical limb darkening + crisp 1px rim highlight at 80°N boundary
+    // Subtle spherical limb darkening + crisp 1px rim highlight at 80° boundary
     float limbVignette = 1.0 - 0.16 * smoothstep(0.78, 1.0, rNorm);
     float rimLine = smoothstep(0.993, 0.9985, rNorm) * (1.0 - smoothstep(0.9985, 1.001, rNorm));
     col = col * limbVignette + vec3(0.32, 0.38, 0.48) * rimLine * 0.45;
@@ -316,28 +288,32 @@
     fragColor = vec4(clamp(col, 0.0, 1.0), alpha);
   }`;
 
+  const MODE_INDEX = { shadow: 0, light: 1, cold: 2 };
+
   // Application State
   const state = {
     lang: localStorage.getItem('sounny_lang') || 'en',
+    pole: 'north',
     mode: 'shadow',
-    weights: [1, 0, 0, 0],
-    targetWeights: [1, 0, 0, 0],
-    sunLonDeg: 132.0, // Grazing polar solar azimuth
-    subLatDeg: 1.54,  // Lunar equatorial inclination to the ecliptic (+1.54° northern summer solstice maximum)
+    weights: [1, 0, 0],
+    targetWeights: [1, 0, 0],
+    sunLonDeg: 132.0,
+    subLatDeg: 1.54,
     orbitPlaying: false,
     zoom: 1.0,
     targetZoom: 1.0,
     pan: { x: 0, y: 0 },
     targetPan: { x: 0, y: 0 },
-    minSunPct: 60,
-    maxSlopeDeg: 10.0,
     activeLandmarkIdx: 0,
-    meta: null,
+    atlasMeta: null,
+    poleMeta: null,
     cpuDem: null,
     cpuSci: null,
   };
 
-  const MODE_INDEX = { shadow: 0, light: 1, cold: 2, outpost: 3 };
+  // Cached GPU textures + CPU RGBA buffers per hemisphere ('north' | 'south')
+  const poleCache = {};
+  const polePromises = {};
 
   // DOM References
   const starCanvas = document.getElementById('starfield');
@@ -348,6 +324,9 @@
   const sunHandle = document.getElementById('sun-handle');
   const sunAzLabel = document.getElementById('sun-az-label');
   const sunDialSvg = document.getElementById('sun-dial-svg');
+  const cardinalTop = document.getElementById('cardinal-top');
+  const cardinalBottom = document.getElementById('cardinal-bottom');
+  const crsStamp = document.getElementById('crs-stamp');
   const btnResetZoom = document.getElementById('btn-reset-zoom');
   const btnPlaySun = document.getElementById('btn-play-sun');
   const btnPlaySunMobile = document.getElementById('btn-play-sun-mobile');
@@ -355,12 +334,6 @@
   const panelSunAz = document.getElementById('panel-sun-az');
   const scaleLabel = document.getElementById('scale-label');
   const scaleLine = document.getElementById('scale-line');
-  const outpostTuner = document.getElementById('outpost-tuner');
-  const rngSun = document.getElementById('rng-sun');
-  const rngSlope = document.getElementById('rng-slope');
-  const valSun = document.getElementById('val-sun');
-  const valSlope = document.getElementById('val-slope');
-  const valViable = document.getElementById('val-viable');
   const loadingVeil = document.getElementById('loading-veil');
 
   // ─── 1. Subtle Deep-Space Starfield ───
@@ -374,7 +347,6 @@
     ctx.scale(dpr, dpr);
     ctx.clearRect(0, 0, w, h);
 
-    // Deterministic seed so backdrop stars never jitter on resize
     let seed = 42197;
     const rand = () => {
       seed = (seed * 1664525 + 1013904223) >>> 0;
@@ -419,16 +391,18 @@
   }
 
   function updateSunDialUI() {
+    const hemi = state.poleMeta ? state.poleMeta.hemi : 1;
     const rad = (state.sunLonDeg * Math.PI) / 180;
     const r = 354;
+    // Screen SVG +Y is downward (-Y_map): North 0°E is bottom (+r), South 0°E is top (-r)
     const x = r * Math.sin(rad);
-    const y = r * Math.cos(rad);
+    const y = hemi * r * Math.cos(rad);
     sunHandle.setAttribute('transform', `translate(${x.toFixed(2)}, ${y.toFixed(2)})`);
 
     const norm = ((state.sunLonDeg + 540) % 360) - 180;
     const absDeg = Math.round(Math.abs(norm));
-    const hemi = absDeg === 0 || absDeg === 180 ? '°' : norm > 0 ? '°E' : '°W';
-    const labelText = `${absDeg}${hemi}`;
+    const dir = absDeg === 0 || absDeg === 180 ? '°' : norm > 0 ? '°E' : '°W';
+    const labelText = `${absDeg}${dir}`;
     sunAzLabel.textContent = labelText;
     if (panelSunAz) panelSunAz.textContent = labelText;
     if (rngAzimuth) rngAzimuth.value = String(Math.round(norm));
@@ -459,7 +433,7 @@
     scaleLine.style.width = `${Math.round(chosen * pxPerKm)}px`;
   }
 
-  // ─── 3. WebGL2 Shader Setup ───
+  // ─── 3. WebGL2 Shader Setup & Texture Loader ───
   let gl = null;
   let prog = null;
   let uniforms = {};
@@ -508,23 +482,23 @@
 
     [
       'u_demTex', 'u_sciTex', 'u_resolution', 'u_zoom', 'u_pan',
-      'u_sunLonRad', 'u_subLatRad', 'u_modeWeights', 'u_minSunPct', 'u_maxSlopeDeg'
+      'u_hemi', 'u_elevOffset', 'u_elevSpan',
+      'u_sunLonRad', 'u_subLatRad', 'u_modeWeights'
     ].forEach((name) => {
       uniforms[name] = gl.getUniformLocation(prog, name);
     });
   }
 
-  function createTexture(img, unit, filter) {
+  function createTexture(img, filterMode) {
     const tex = gl.createTexture();
-    gl.activeTexture(gl.TEXTURE0 + unit);
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filterMode);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filterMode);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
     return tex;
   }
 
@@ -546,13 +520,34 @@
     });
   }
 
-  // ─── 4. Crisp Vector Moon Overlay (Graticule, 6 IAU Craters, 5 Landmark Pins) ───
+  function ensurePoleLoaded(poleKey) {
+    if (poleCache[poleKey]) return Promise.resolve(poleCache[poleKey]);
+    if (polePromises[poleKey]) return polePromises[poleKey];
+
+    const pMeta = state.atlasMeta.poles[poleKey];
+    polePromises[poleKey] = Promise.all([
+      loadImage(pMeta.assets.dem_2k),
+      loadImage(pMeta.assets.science_1k),
+    ]).then(([demImg, sciImg]) => {
+      const pack = {
+        demTex: createTexture(demImg, gl.LINEAR),
+        sciTex: createTexture(sciImg, gl.LINEAR),
+        cpuDem: extractPixels(demImg),
+        cpuSci: extractPixels(sciImg),
+      };
+      poleCache[poleKey] = pack;
+      return pack;
+    });
+    return polePromises[poleKey];
+  }
+
+  // ─── 4. Crisp Vector Moon Overlay (Graticule, IAU Craters, 5 Landmark Pins) ───
   function renderMoonOverlay() {
-    if (!state.meta) return;
+    if (!state.atlasMeta || !state.poleMeta) return;
     const ns = 'http://www.w3.org/2000/svg';
     overlaySvg.innerHTML = '';
 
-    const half = state.meta.half_extent_m;
+    const half = state.atlasMeta.half_extent_m;
     const toSvg = (x_m, y_m) => {
       const u = (x_m + half) / (2 * half);
       const v = (half - y_m) / (2 * half);
@@ -562,9 +557,9 @@
       };
     };
 
-    // 85°N subtle graticule circle + 90°N spin-axis crosshair
+    // 85° graticule circle + 90° spin-axis crosshair
     const pole = toSvg(0, 0);
-    const rho85 = 2 * state.meta.radius_moon_m * Math.tan((2.5 * Math.PI) / 180);
+    const rho85 = 2 * state.atlasMeta.radius_moon_m * Math.tan((2.5 * Math.PI) / 180);
     const r85Svg = (rho85 / (2 * half)) * state.zoom * 1000;
 
     const ring85 = document.createElementNS(ns, 'circle');
@@ -590,8 +585,8 @@
     cross2.setAttribute('class', 'pole-cross');
     overlaySvg.appendChild(cross2);
 
-    // 6 Official IAU / USGS Gazetteer Major Craters
-    state.meta.major_craters.forEach((c) => {
+    // Official IAU / USGS Gazetteer Major Craters
+    state.poleMeta.major_craters.forEach((c) => {
       const p = toSvg(c.x_m, c.y_m);
       if (p.x < 60 || p.x > 940 || p.y < 60 || p.y > 940) return;
       const t = document.createElementNS(ns, 'text');
@@ -602,66 +597,79 @@
       overlaySvg.appendChild(t);
     });
 
-    // 5 Interactive Landmark Reticles
-    state.meta.landmarks.forEach((lm, idx) => {
+    // 5 Interactive Landmark Pins
+    state.poleMeta.landmarks.forEach((lm, idx) => {
       const p = toSvg(lm.x_m, lm.y_m);
-      if (p.x < 20 || p.x > 980 || p.y < 20 || p.y > 980) return;
+      if (p.x < 25 || p.x > 975 || p.y < 25 || p.y > 975) return;
+
       const g = document.createElementNS(ns, 'g');
       g.setAttribute('class', idx === state.activeLandmarkIdx ? 'lm-pin active' : 'lm-pin');
       g.setAttribute('transform', `translate(${p.x.toFixed(1)}, ${p.y.toFixed(1)})`);
 
       const halo = document.createElementNS(ns, 'circle');
-      halo.setAttribute('r', idx === state.activeLandmarkIdx ? '17' : '13');
       halo.setAttribute('class', 'pin-halo');
+      halo.setAttribute('r', idx === state.activeLandmarkIdx ? '17' : '12');
 
       const core = document.createElementNS(ns, 'circle');
-      core.setAttribute('r', idx === state.activeLandmarkIdx ? '4.5' : '3.2');
       core.setAttribute('class', 'pin-core');
+      core.setAttribute('r', idx === state.activeLandmarkIdx ? '4.5' : '3.2');
 
       const num = document.createElementNS(ns, 'text');
-      num.setAttribute('x', '16');
-      num.setAttribute('y', '4');
       num.setAttribute('class', 'pin-num');
+      // Slightly offset pin 01/02 labels in opposite directions when close near the South Pole
+      const labelLeft = state.pole === 'south' && idx === 0;
+      num.setAttribute('x', labelLeft ? '-16' : '16');
+      num.setAttribute('y', '3.5');
+      if (labelLeft) num.setAttribute('text-anchor', 'end');
       num.textContent = `0${lm.index}`;
 
       g.appendChild(halo);
       g.appendChild(core);
       g.appendChild(num);
-      g.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        selectLandmark(idx, false);
+
+      g.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectLandmark(idx, true);
       });
       overlaySvg.appendChild(g);
     });
   }
 
-  // ─── 5. Story Card, Surface Probe Telemetry & Outpost Viable Area ───
+  // ─── 5. Telemetry, Landmarks, Modes & Dual-Pole Switching ───
   function formatLon(lon) {
-    const a = Math.abs(lon).toFixed(1);
-    return Math.abs(lon) < 0.05 ? '0.0°' : lon > 0 ? `${a}°E` : `${a}°W`;
+    const a = Math.abs(lon);
+    if (a < 0.05 || Math.abs(a - 180) < 0.05) return `${a.toFixed(1)}°`;
+    return `${a.toFixed(1)}°${lon > 0 ? 'E' : 'W'}`;
   }
 
-  function formatSignedM(m) {
-    return `${m >= 0 ? '+' : ''}${m.toLocaleString('en-US')} m`;
+  function formatLat(lat) {
+    return `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? 'N' : 'S'}`;
+  }
+
+  function formatSignedM(val) {
+    return `${val >= 0 ? '+' : ''}${val.toLocaleString('en-US')} m`;
   }
 
   function updateProbeAtUV(u, v) {
-    if (!state.cpuDem || !state.cpuSci || !state.meta) return;
-    if (u < 0 || u > 1 || v < 0 || v > 1) return;
-
-    const half = state.meta.half_extent_m;
-    const x = -half + u * 2 * half;
-    const y = +half - v * 2 * half;
-    const rho = Math.hypot(x, y);
+    if (!state.cpuDem || !state.cpuSci || !state.atlasMeta || !state.poleMeta) return;
+    const half = state.atlasMeta.half_extent_m;
+    const x_m = -half + u * (2 * half);
+    const y_m = half - v * (2 * half);
+    const rho = Math.hypot(x_m, y_m);
     if (rho > half) return;
 
-    const lat = 90 - (2 * Math.atan(rho / (2 * state.meta.radius_moon_m)) * 180) / Math.PI;
-    const lon = rho < 1.0 ? 0.0 : (Math.atan2(x, -y) * 180) / Math.PI;
+    const hemi = state.poleMeta.hemi;
+    const dlat = (2 * Math.atan(rho / (2 * state.atlasMeta.radius_moon_m)) * 180) / Math.PI;
+    const lat = hemi * (90 - dlat);
+    const lon = (Math.atan2(x_m, -hemi * y_m) * 180) / Math.PI;
 
     const c2 = Math.min(2047, Math.max(0, Math.floor(u * 2048)));
     const r2 = Math.min(2047, Math.max(0, Math.floor(v * 2048)));
     const i2 = (r2 * 2048 + c2) * 4;
-    const elev = Math.round((((state.cpuDem[i2] << 8) | state.cpuDem[i2 + 1]) / 65535) * 8500 - 5500);
+    const elev = Math.round(
+      (((state.cpuDem[i2] << 8) | state.cpuDem[i2 + 1]) / 65535) * state.poleMeta.elev_span_m +
+      state.poleMeta.elev_offset_m
+    );
     const sun = ((state.cpuDem[i2 + 2] / 255) * 100).toFixed(1);
 
     const c1 = Math.min(1023, Math.max(0, Math.floor(u * 1024)));
@@ -669,17 +677,18 @@
     const i1 = (r1 * 1024 + c1) * 4;
     const temp = ((state.cpuSci[i1] / 255) * 200 + 20).toFixed(1);
 
-    document.getElementById('ch-pos').textContent = `${lat.toFixed(2)}°N · ${formatLon(lon)}`;
+    document.getElementById('ch-pos').textContent = `${formatLat(lat)} · ${formatLon(lon)}`;
     document.getElementById('ch-elev').textContent = formatSignedM(elev);
     document.getElementById('ch-sun').textContent = `${sun}%`;
     document.getElementById('ch-temp').textContent = `${temp} K`;
   }
 
   function selectLandmark(idx, switchLens = false) {
-    if (!state.meta) return;
-    const n = state.meta.landmarks.length;
+    if (!state.poleMeta) return;
+    const list = state.poleMeta.landmarks;
+    const n = list.length;
     state.activeLandmarkIdx = ((idx % n) + n) % n;
-    const lm = state.meta.landmarks[state.activeLandmarkIdx];
+    const lm = list[state.activeLandmarkIdx];
     const isFr = state.lang === 'fr';
 
     document.querySelectorAll('.lm-tab').forEach((tab) => {
@@ -691,7 +700,7 @@
     document.getElementById('sm-elev').textContent = formatSignedM(lm.elev_m);
     document.getElementById('sm-sun').textContent = `${lm.solar_pct.toFixed(1)}%`;
     document.getElementById('sm-temp').textContent = `${lm.temp_avg_k.toFixed(1)} K`;
-    document.getElementById('story-coords').textContent = `${lm.lat.toFixed(2)}°N · ${formatLon(lm.lon)} · LOLA 297M GRID`;
+    document.getElementById('story-coords').textContent = `${formatLat(lm.lat)} · ${formatLon(lm.lon)} · LOLA 297M GRID`;
 
     if (switchLens && lm.recommended_mode) {
       setMode(lm.recommended_mode);
@@ -702,65 +711,75 @@
   function setMode(mode) {
     const cleanMode = MODE_INDEX[mode] !== undefined ? mode : 'shadow';
     state.mode = cleanMode;
-    state.targetWeights = [0, 0, 0, 0];
+    state.targetWeights = [0, 0, 0];
     state.targetWeights[MODE_INDEX[cleanMode]] = 1;
 
     document.querySelectorAll('.lens-btn').forEach((b) => {
       b.classList.toggle('active', b.dataset.mode === cleanMode);
     });
-    if (outpostTuner) {
-      outpostTuner.classList.toggle('collapsed', cleanMode !== 'outpost');
-    }
-    if (cleanMode === 'outpost') updateOutpostViableArea();
   }
 
-  function updateOutpostViableArea() {
-    if (!state.cpuDem || !state.cpuSci || !state.meta) return;
-    // Exact spherical-area scan across 1024x1024 polar cap (lat >= 80°N) matching GPU outpost gates
-    let totalSphKm2 = 0;
-    const half = state.meta.half_extent_m;
-    const rMoon = state.meta.radius_moon_m;
-    const res1 = state.meta.sci_res_m;
-    const planarCellKm2 = Math.pow(res1 / 1000, 2);
-    const dem = state.cpuDem;
-    const sci = state.cpuSci;
-    const minS = state.minSunPct;
-    const maxSl = state.maxSlopeDeg;
-    const res2 = 2 * state.meta.dem_res_m;
+  function updatePoleCopyAndKPIs() {
+    if (!state.poleMeta) return;
+    const dict = I18N[state.lang] || I18N.en;
+    const pDict = dict.poles[state.pole];
+    const stats = state.poleMeta.stats;
+    const coldC = Math.round(stats.coldest_temp_k - 273.15);
 
-    for (let r = 2; r < 1022; r++) {
-      const y = half - (r + 0.5) * res1;
-      for (let c = 2; c < 1022; c++) {
-        const x = -half + (c + 0.5) * res1;
-        const rho2 = x * x + y * y;
-        if (rho2 > half * half) continue;
+    document.getElementById('rail-eyebrow').textContent = pDict.eyebrow;
+    document.getElementById('rail-title').textContent = pDict.title;
+    document.getElementById('rail-subtitle').textContent = pDict.subtitle;
+    document.getElementById('m-eyebrow').textContent = pDict.eyebrow;
+    document.getElementById('m-title').textContent = pDict.title;
+    document.getElementById('sun-horizon-lbl').textContent = pDict.sun_horizon;
 
-        const i1 = (r * 1024 + c) * 4;
-        const distPsrKm = sci[i1 + 2] / 10.0;
-        if (distPsrKm > 5.0) continue;
+    document.getElementById('stat-cold').textContent = `${stats.coldest_temp_k.toFixed(1)} K`;
+    document.getElementById('stat-cold-lbl').textContent = state.lang === 'fr' ? `Min ${coldC} °C` : `${coldC}°C Min`;
+    document.getElementById('stat-sun').textContent = `${stats.peak_solar_pct.toFixed(1)}%`;
+    document.getElementById('stat-psr').textContent = `${stats.psr_area_km2.toLocaleString('en-US')} km²`;
 
-        const r2 = r * 2;
-        const c2 = c * 2;
-        const i2 = (r2 * 2048 + c2) * 4;
-        const sunPct = (dem[i2 + 2] / 255) * 100;
-        if (sunPct < minS) continue;
-
-        const iR = (r2 * 2048 + (c2 + 1)) * 4;
-        const iL = (r2 * 2048 + (c2 - 1)) * 4;
-        const iU = ((r2 - 1) * 2048 + c2) * 4;
-        const iD = ((r2 + 1) * 2048 + c2) * 4;
-        const hR = (((dem[iR] << 8) | dem[iR + 1]) / 65535) * 8500 - 5500;
-        const hL = (((dem[iL] << 8) | dem[iL + 1]) / 65535) * 8500 - 5500;
-        const hU = (((dem[iU] << 8) | dem[iU + 1]) / 65535) * 8500 - 5500;
-        const hD = (((dem[iD] << 8) | dem[iD + 1]) / 65535) * 8500 - 5500;
-        const sl = (Math.atan(Math.hypot((hR - hL) / res2, (hU - hD) / res2)) * 180) / Math.PI;
-        if (sl <= maxSl) {
-          const kScale = 1 + rho2 / (4 * rMoon * rMoon);
-          totalSphKm2 += planarCellKm2 / (kScale * kScale);
-        }
-      }
+    // Update Sun Dial North/South stereographic meridian orientation & CRS stamp
+    if (state.poleMeta.hemi > 0) {
+      cardinalTop.textContent = dict.far_side;
+      cardinalBottom.textContent = dict.near_side;
+    } else {
+      cardinalTop.textContent = dict.near_side;
+      cardinalBottom.textContent = dict.far_side;
     }
-    valViable.textContent = `${totalSphKm2.toFixed(1)} km²`;
+    if (crsStamp) {
+      crsStamp.textContent = `${state.poleMeta.crs_short} · ${dict.scroll_zoom}`;
+    }
+  }
+
+  async function switchPole(poleKey, isInitial = false) {
+    if (!state.atlasMeta || !state.atlasMeta.poles[poleKey]) return;
+    if (!isInitial && state.pole === poleKey && demTex && sciTex) return;
+
+    const pack = await ensurePoleLoaded(poleKey);
+    state.pole = poleKey;
+    state.poleMeta = state.atlasMeta.poles[poleKey];
+    demTex = pack.demTex;
+    sciTex = pack.sciTex;
+    state.cpuDem = pack.cpuDem;
+    state.cpuSci = pack.cpuSci;
+
+    state.subLatDeg = state.poleMeta.summer_subsolar_lat_deg;
+    state.sunLonDeg = state.poleMeta.default_sun_lon_deg;
+    state.targetZoom = 1.0;
+    state.zoom = 1.0;
+    state.targetPan = { x: 0, y: 0 };
+    state.pan = { x: 0, y: 0 };
+    btnResetZoom.classList.add('hidden');
+
+    document.querySelectorAll('.pole-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.pole === poleKey);
+    });
+
+    updatePoleCopyAndKPIs();
+    updateSunDialUI();
+    updateScaleBar();
+    updateProbeAtUV(0.5, 0.5);
+    selectLandmark(0, false);
   }
 
   function applyLanguage(lang) {
@@ -775,19 +794,21 @@
       const k = el.getAttribute('data-i18n');
       if (dict[k]) el.textContent = dict[k];
     });
+    updatePoleCopyAndKPIs();
     selectLandmark(state.activeLandmarkIdx, false);
   }
 
-  // ─── 6. Interactive Sun Ring, Cursor Telemetry, Pan & Zoom ───
+  // ─── 6. Interactive Sun Ring, Hemisphere Toggle, Cursor Telemetry, Pan & Zoom ───
   function bindInteractions() {
     let draggingSun = false;
     const updateSunFromPointer = (clientX, clientY) => {
+      const hemi = state.poleMeta ? state.poleMeta.hemi : 1;
       const rect = sunDialSvg.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
       const dx = clientX - cx;
       const dy = clientY - cy;
-      state.sunLonDeg = (Math.atan2(dx, dy) * 180) / Math.PI;
+      state.sunLonDeg = (Math.atan2(dx, hemi * dy) * 180) / Math.PI;
       updateSunDialUI();
     };
 
@@ -837,6 +858,12 @@
       });
     }
 
+    document.querySelectorAll('.pole-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        switchPole(btn.dataset.pole);
+      });
+    });
+
     document.querySelectorAll('.lens-btn').forEach((btn) => {
       btn.addEventListener('click', () => setMode(btn.dataset.mode));
     });
@@ -855,17 +882,6 @@
 
     document.querySelectorAll('.lang-btn').forEach((btn) => {
       btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
-    });
-
-    rngSun.addEventListener('input', () => {
-      state.minSunPct = parseFloat(rngSun.value);
-      valSun.textContent = `≥${state.minSunPct}%`;
-      updateOutpostViableArea();
-    });
-    rngSlope.addEventListener('input', () => {
-      state.maxSlopeDeg = parseFloat(rngSlope.value);
-      valSlope.textContent = `≤${state.maxSlopeDeg.toFixed(1)}°`;
-      updateOutpostViableArea();
     });
 
     let panning = false;
@@ -913,7 +929,7 @@
     });
 
     moonDisc.addEventListener('pointermove', (e) => {
-      if (!state.cpuDem || !state.cpuSci || !state.meta) return;
+      if (!state.cpuDem || !state.cpuSci || !state.atlasMeta) return;
       const rect = moonDisc.getBoundingClientRect();
       const sx = (e.clientX - rect.left) / rect.width;
       const sy = (e.clientY - rect.top) / rect.height;
@@ -954,7 +970,7 @@
     }
 
     const lerpK = 1 - Math.exp(-dt * 10);
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       state.weights[i] += (state.targetWeights[i] - state.weights[i]) * lerpK;
     }
 
@@ -974,7 +990,7 @@
       updateScaleBar();
     }
 
-    if (gl && demTex && sciTex) {
+    if (gl && demTex && sciTex && state.poleMeta) {
       resizeGL();
       gl.useProgram(prog);
       gl.activeTexture(gl.TEXTURE0);
@@ -988,17 +1004,17 @@
       gl.uniform2f(uniforms.u_resolution, glCanvas.width, glCanvas.height);
       gl.uniform1f(uniforms.u_zoom, state.zoom);
       gl.uniform2f(uniforms.u_pan, state.pan.x, state.pan.y);
+      gl.uniform1f(uniforms.u_hemi, state.poleMeta.hemi);
+      gl.uniform1f(uniforms.u_elevOffset, state.poleMeta.elev_offset_m);
+      gl.uniform1f(uniforms.u_elevSpan, state.poleMeta.elev_span_m);
       gl.uniform1f(uniforms.u_sunLonRad, (state.sunLonDeg * Math.PI) / 180);
       gl.uniform1f(uniforms.u_subLatRad, (state.subLatDeg * Math.PI) / 180);
-      gl.uniform4f(
+      gl.uniform3f(
         uniforms.u_modeWeights,
         state.weights[0],
         state.weights[1],
-        state.weights[2],
-        state.weights[3]
+        state.weights[2]
       );
-      gl.uniform1f(uniforms.u_minSunPct, state.minSunPct);
-      gl.uniform1f(uniforms.u_maxSlopeDeg, state.maxSlopeDeg);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
@@ -1010,46 +1026,26 @@
   async function boot() {
     renderStarfield();
     buildSunDialTicks();
-    updateSunDialUI();
     updateScaleBar();
     initWebGL();
     bindInteractions();
 
-    const [metaRes, demImg, sciImg] = await Promise.all([
-      fetch('assets/arctic_meta.json').then((r) => r.json()),
-      loadImage('assets/arctic_dem_2k.png'),
-      loadImage('assets/arctic_science_1k.png'),
-    ]);
+    state.atlasMeta = await fetch('assets/polar_atlas_meta.json').then((r) => r.json());
 
-    state.meta = metaRes;
-    state.cpuDem = extractPixels(demImg);
-    state.cpuSci = extractPixels(sciImg);
-
-    // LINEAR filter for smooth color ramps; 16-bit elevation & surface-frost mask use integer texelFetch in GLSL
-    demTex = createTexture(demImg, 0, gl.LINEAR);
-    sciTex = createTexture(sciImg, 1, gl.LINEAR);
-
-    const coldC = Math.round(metaRes.stats.coldest_temp_k - 273.15);
-    I18N.en.fact_cold = `${coldC}°C Min`;
-    I18N.fr.fact_cold = `Min ${coldC} °C`;
-
-    document.getElementById('stat-cold').textContent = `${metaRes.stats.coldest_temp_k.toFixed(1)} K`;
-    document.getElementById('stat-sun').textContent = `${metaRes.stats.peak_solar_pct.toFixed(1)}%`;
-    document.getElementById('stat-psr').textContent = `${metaRes.stats.psr_area_km2.toLocaleString('en-US')} km²`;
-
-    // Populate authentic North Pole (90.00°N) surface probe and viable ridge area before revealing UI
-    updateProbeAtUV(0.5, 0.5);
-    updateOutpostViableArea();
+    // Boot with North Pole first for rapid initial paint, then warm South Pole cache in background
+    await switchPole('north', true);
     applyLanguage(state.lang);
-    selectLandmark(0, false);
     requestAnimationFrame(frame);
 
     setTimeout(() => {
       loadingVeil.classList.add('done');
+      setTimeout(() => {
+        ensurePoleLoaded('south').catch(() => {});
+      }, 350);
     }, 180);
   }
 
   boot().catch((err) => {
-    console.error('Lunar Arctic Atlas boot error:', err);
+    console.error('Lunar Polar Atlas boot error:', err);
   });
 })();
