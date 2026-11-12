@@ -44,17 +44,21 @@ def capture_transparent_orb(page, out_path):
       document.querySelector('.utility-bar').style.visibility='hidden';
       document.querySelector('.carto-stamp').style.visibility='hidden';
       document.getElementById('starfield').style.visibility='hidden';
+      document.getElementById('sun-dial-svg').style.visibility='hidden';
+      document.getElementById('moon-overlay-svg').style.visibility='hidden';
       document.getElementById('cosmos').style.background='transparent';
       document.documentElement.style.background='transparent';
       document.body.style.background='transparent';
     """)
-    page.wait_for_timeout(400)
-    page.locator("#orb-stage").screenshot(path=out_path, omit_background=True)
+    page.wait_for_timeout(350)
+    page.locator("#moon-disc").screenshot(path=out_path, omit_background=True)
     page.evaluate("""
       document.getElementById('studio-rail').style.visibility='visible';
       document.querySelector('.utility-bar').style.visibility='visible';
       document.querySelector('.carto-stamp').style.visibility='visible';
       document.getElementById('starfield').style.visibility='visible';
+      document.getElementById('sun-dial-svg').style.visibility='visible';
+      document.getElementById('moon-overlay-svg').style.visibility='visible';
       document.getElementById('cosmos').style.background='';
       document.documentElement.style.background='';
       document.body.style.background='';
@@ -194,198 +198,272 @@ def main():
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Plus+Jakarta+Sans:wght@700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{
     width: 1200px;
     height: 1200px;
-    background: radial-gradient(circle at 50% 48%, #10182b 0%, #05080f 52%, #020306 100%);
+    background:
+      radial-gradient(circle at 27% 53%, rgba(56, 189, 248, 0.08) 0%, rgba(11, 15, 23, 0) 42%),
+      radial-gradient(circle at 73% 53%, rgba(251, 191, 36, 0.06) 0%, rgba(11, 15, 23, 0) 42%),
+      radial-gradient(circle at 50% 20%, #0f172a 0%, #070b12 58%, #030509 100%);
     color: #f8fafc;
     font-family: 'Plus Jakarta Sans', sans-serif;
-    padding: 54px 58px 48px;
+    padding: 46px 50px 40px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     position: relative;
     overflow: hidden;
   }}
-  .top-row {{
+  .brand-bar {{
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    z-index: 3;
+    align-items: center;
+  }}
+  .brand-pill {{
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Space Grotesk', monospace;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: #cbd5e1;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+  }}
+  .brand-dot {{
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+  }}
+  .url-pill {{
+    font-family: 'Space Grotesk', monospace;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #f1f5f9;
+    padding: 8px 18px;
+    border-radius: 999px;
+    background: rgba(56, 189, 248, 0.10);
+    border: 1px solid rgba(56, 189, 248, 0.32);
+  }}
+  .hero-header {{
+    margin-top: 18px;
   }}
   .kicker {{
     font-family: 'Space Grotesk', monospace;
     font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.24em;
-    color: #94a3b8;
+    letter-spacing: 0.22em;
+    color: #38bdf8;
     text-transform: uppercase;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }}
   h1 {{
-    font-size: 58px;
+    font-size: 56px;
     font-weight: 800;
-    letter-spacing: -0.025em;
-    line-height: 0.98;
+    letter-spacing: -0.028em;
+    line-height: 1.0;
     color: #ffffff;
   }}
-  .url-pill {{
-    font-family: 'Space Grotesk', monospace;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    color: #e2e8f0;
-    padding: 9px 18px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+  h1 .accent {{
+    background: linear-gradient(92deg, #e2e8f0 0%, #7dd3fc 52%, #fef08a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }}
+  .subhead {{
+    margin-top: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 18.5px;
+    font-weight: 400;
+    color: #94a3b8;
+    letter-spacing: -0.005em;
   }}
   .poles-stage {{
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-    align-items: center;
-    margin: auto 0;
-    z-index: 2;
+    align-items: stretch;
+    margin: 18px 0;
+    flex: 1;
   }}
   .pole-card {{
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.62) 0%, rgba(7, 11, 19, 0.82) 100%);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    border-radius: 24px;
+    padding: 20px 22px 20px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    gap: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }}
-  .pole-badge {{
+  .pole-top {{
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }}
+  .pole-title {{
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: -0.01em;
+  }}
+  .pole-crs {{
     font-family: 'Space Grotesk', monospace;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.20em;
-    color: #cbd5e1;
-    text-transform: uppercase;
-    padding: 5px 14px;
+    letter-spacing: 0.12em;
+    color: #94a3b8;
+    padding: 4px 10px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.11);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }}
+  .orb-wrap {{
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 8px 0;
   }}
   .orb-img {{
-    width: 530px;
-    height: 530px;
-    object-fit: contain;
+    width: 486px;
+    height: 486px;
+    border-radius: 50%;
+    object-fit: cover;
     display: block;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.14),
+      0 22px 55px rgba(0, 0, 0, 0.85);
   }}
   .pole-stats {{
-    display: flex;
-    gap: 26px;
-    padding-top: 4px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.18fr 0.86fr 1.06fr;
+    gap: 10px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
   }}
   .p-stat {{
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }}
-  .p-val {{
-    font-family: 'Space Grotesk', monospace;
-    font-size: 21px;
-    font-weight: 700;
-    color: #ffffff;
-    letter-spacing: -0.02em;
+    gap: 4px;
   }}
   .p-lbl {{
     font-family: 'Space Grotesk', monospace;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 600;
-    letter-spacing: 0.14em;
-    color: #64748b;
+    letter-spacing: 0.13em;
+    color: #94a3b8;
     text-transform: uppercase;
   }}
+  .p-val {{
+    font-family: 'Space Grotesk', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f8fafc;
+    letter-spacing: -0.02em;
+  }}
+  .p-val.cold {{ color: #7dd3fc; }}
+  .p-val.sun {{ color: #fde68a; }}
   .bottom-row {{
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
-    border-top: 1px solid rgba(255, 255, 255, 0.10);
-    padding-top: 20px;
-    z-index: 3;
+    align-items: center;
+    border-top: 1px solid rgba(148, 163, 184, 0.14);
+    padding-top: 16px;
   }}
-  .foot-left {{
+  .foot-item {{
     font-family: 'Space Grotesk', monospace;
     font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
+    font-weight: 600;
+    letter-spacing: 0.12em;
     color: #94a3b8;
     text-transform: uppercase;
-    line-height: 1.6;
   }}
-  .credit {{
-    font-family: 'Space Grotesk', monospace;
-    font-size: 11.5px;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    color: #94a3b8;
-    text-transform: uppercase;
-    text-align: right;
-    line-height: 1.6;
+  .foot-item strong {{
+    color: #e2e8f0;
+    font-weight: 700;
   }}
 </style>
 </head>
 <body>
-  <div class="top-row">
-    <div>
-      <div class="kicker">NASA LRO DUAL-POLE ORBITAL ATLAS · 80°N - 90°N &amp; 80°S - 90°S</div>
-      <h1>THE LUNAR POLES</h1>
+  <div>
+    <div class="brand-bar">
+      <div class="brand-pill"><span class="brand-dot"></span>SOUNNY.COM // JSMARS PLANETARY WEBGIS</div>
+      <div class="url-pill">sounny.github.io/lunarmap</div>
     </div>
-    <div class="url-pill">sounny.github.io/lunarmap</div>
+    <div class="hero-header">
+      <div class="kicker">NASA LRO · LOLA LASER ALTIMETRY · GSFC PGDA · UCLA DIVINER</div>
+      <h1>Both Poles of <span class="accent">the Moon</span></h1>
+      <p class="subhead">Real-time 3D WebGL2 horizon raymarching across 297 m polar topography, 18.6-year sunlight, and 24 K ice traps.</p>
+    </div>
   </div>
 
   <div class="poles-stage">
     <div class="pole-card">
-      <div class="pole-badge">NORTH POLE · 80°N - 90°N</div>
-      <img class="orb-img" src="{north_b64}" alt="Lunar North Pole Raymarched Globe" />
+      <div class="pole-top">
+        <span class="pole-title">Lunar North Pole · 80°N - 90°N</span>
+        <span class="pole-crs">IAU_2015:30130</span>
+      </div>
+      <div class="orb-wrap">
+        <img class="orb-img" src="{north_b64}" alt="Lunar North Pole Raymarched Globe" />
+      </div>
       <div class="pole-stats">
         <div class="p-stat">
-          <span class="p-val">{sn['coldest_temp_k']} K ({cn}°C)</span>
-          <span class="p-lbl">PEARY PSR MIN</span>
+          <span class="p-lbl">COLDEST TRAP</span>
+          <span class="p-val cold">{sn['coldest_temp_k']} K ({cn}°C)</span>
         </div>
         <div class="p-stat">
-          <span class="p-val">{sn['peak_solar_pct']}%</span>
-          <span class="p-lbl">WHIPPLE SUN</span>
+          <span class="p-lbl">PEAK SUNLIGHT</span>
+          <span class="p-val sun">{sn['peak_solar_pct']}%</span>
         </div>
         <div class="p-stat">
-          <span class="p-val">{sn['psr_area_km2']:,} km²</span>
           <span class="p-lbl">PERM. SHADOW</span>
+          <span class="p-val">{sn['psr_area_km2']:,} km²</span>
         </div>
       </div>
     </div>
 
     <div class="pole-card">
-      <div class="pole-badge">SOUTH POLE · 80°S - 90°S</div>
-      <img class="orb-img" src="{south_b64}" alt="Lunar South Pole Raymarched Globe" />
+      <div class="pole-top">
+        <span class="pole-title">Lunar South Pole · 80°S - 90°S</span>
+        <span class="pole-crs">IAU_2015:30135</span>
+      </div>
+      <div class="orb-wrap">
+        <img class="orb-img" src="{south_b64}" alt="Lunar South Pole Raymarched Globe" />
+      </div>
       <div class="pole-stats">
         <div class="p-stat">
-          <span class="p-val">{ss['coldest_temp_k']} K ({cs}°C)</span>
-          <span class="p-lbl">SOUTH PSR MIN</span>
+          <span class="p-lbl">COLDEST TRAP</span>
+          <span class="p-val cold">{ss['coldest_temp_k']} K ({cs}°C)</span>
         </div>
         <div class="p-stat">
-          <span class="p-val">{ss['peak_solar_pct']}%</span>
-          <span class="p-lbl">CONNECTING RIDGE</span>
+          <span class="p-lbl">PEAK SUNLIGHT</span>
+          <span class="p-val sun">{ss['peak_solar_pct']}%</span>
         </div>
         <div class="p-stat">
-          <span class="p-val">{ss['psr_area_km2']:,} km²</span>
           <span class="p-lbl">PERM. SHADOW</span>
+          <span class="p-val">{ss['psr_area_km2']:,} km²</span>
         </div>
       </div>
     </div>
   </div>
 
   <div class="bottom-row">
-    <div class="foot-left">
-      REAL-TIME 3D WEBGL2 HORIZON RAYMARCHER · ±1.54° GRAZING POLAR SUN<br/>SUNLIGHT · 18.6-YR PEAK ILLUMINATION · DIVINER CRYOGENIC ICE TRAPS
-    </div>
-    <div class="credit">
-      NASA LRO LOLA (297M) · GSFC PGDA · UCLA DIVINER<br/>IAU_2015:30130 &amp; 30135 · JSMARS ECOSYSTEM
-    </div>
+    <div class="foot-item"><strong>±1.54°</strong> GRAZING POLAR SUN · <strong>3 LENSES:</strong> SUNLIGHT · PEAK SUN · ICE TRAPS</div>
+    <div class="foot-item">OPEN SOURCE · <strong>GITHUB.COM/SOUNNY/LUNARMAP</strong></div>
   </div>
 </body>
 </html>"""
@@ -396,9 +474,9 @@ def main():
 
         cpage = browser.new_page(viewport={"width": 1200, "height": 1200}, device_scale_factor=2)
         cpage.goto(f"http://127.0.0.1:{port}/screenshots/render_poster.html", wait_until="networkidle")
-        cpage.wait_for_timeout(400)
+        cpage.wait_for_timeout(450)
 
-        out_card_queue = os.path.join(QUEUE_DIR, "2026-11-11_lunar_arctic_artemis_square_post.png")
+        out_card_queue = os.path.join(QUEUE_DIR, "2026-11-12_lunar_polar_atlas_square_post.png")
         out_card_repo = os.path.join(SCREENSHOTS_DIR, "linkedin_billboard_2400.png")
         cpage.screenshot(path=out_card_queue)
         cpage.screenshot(path=out_card_repo)
